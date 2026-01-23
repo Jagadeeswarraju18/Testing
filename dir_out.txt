@@ -1,0 +1,51 @@
+ Volume in drive C is Windows-SSD
+ Volume Serial Number is 5A6B-866C
+
+ Directory of C:\SubTracker\subtrack---smart-subscription-manager
+
+01/23/2026  02:17 PM    <DIR>          .
+01/07/2026  09:42 PM    <DIR>          ..
+12/28/2025  09:58 PM               292 .env.local
+12/12/2025  06:49 PM               253 .gitignore
+01/22/2026  10:05 PM    <DIR>          android
+01/22/2026  09:17 PM            52,175 App.tsx
+12/28/2025  09:24 PM                 0 build.log
+01/03/2026  11:05 PM               184 capacitor.config.ts
+01/23/2026  02:16 PM                43 commit_msg.txt
+01/21/2026  10:23 AM    <DIR>          components
+01/07/2026  10:39 AM             4,951 constants.ts
+01/04/2026  12:33 PM    <DIR>          context
+01/08/2026  10:24 AM    <DIR>          db_scripts
+01/23/2026  02:17 PM                 0 dir_out.txt
+01/22/2026  10:05 PM    <DIR>          dist
+01/23/2026  02:15 PM                64 final_log.txt
+01/23/2026  02:15 PM             8,490 final_status.txt
+01/04/2026  09:13 PM             3,822 generate_icons.py
+01/23/2026  02:14 PM               129 git_commit_output.txt
+01/23/2026  02:14 PM               638 git_status_output.txt
+01/03/2026  09:23 PM               889 index.css
+01/04/2026  11:09 AM             2,130 index.html
+12/31/2025  03:49 PM               349 index.tsx
+01/22/2026  10:44 PM             2,626 LEGAL.md
+01/03/2026  10:49 PM             2,070 LEGAL_PLAIN.txt
+12/13/2025  11:36 AM    <DIR>          lib
+12/12/2025  06:49 PM               231 metadata.json
+01/04/2026  04:15 PM    <DIR>          node_modules
+01/22/2026  01:02 PM           151,569 package-lock.json
+01/22/2026  01:01 PM             1,041 package.json
+01/19/2026  02:32 PM    <DIR>          public
+12/12/2025  06:49 PM               553 README.md
+01/19/2026  10:59 AM    <DIR>          services
+01/19/2026  11:01 AM    <DIR>          supabase
+12/27/2025  11:56 AM               507 test_currency.ts
+01/23/2026  02:14 PM                11 test_debug.txt
+12/27/2025  11:58 AM             1,146 test_update.ts
+12/12/2025  06:49 PM               542 tsconfig.json
+01/07/2026  09:26 AM             3,266 types.ts
+01/04/2026  02:30 PM    <DIR>          utils
+01/19/2026  10:57 AM             3,576 utils.ts
+01/19/2026  11:01 AM               126 vercel.json
+01/02/2026  06:12 PM               376 vite-env.d.ts
+01/04/2026  11:25 AM               698 vite.config.ts
+              31 File(s)        242,747 bytes
+              13 Dir(s)  49,226,665,984 bytes free
