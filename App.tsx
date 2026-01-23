@@ -1158,35 +1158,7 @@ const MainApp: React.FC = () => {
                 updateWorkspace(activeWorkspace.id, updates);
               }
             }}
-            onConvertAllSubscriptions={(newCurrency) => {
-              if (activeWorkspace) {
-                // Bulk convert all subscriptions in this workspace
-                const oldCurrency = activeWorkspace.currency;
-                const convertedSubs = subscriptions
-                  .filter(sub => sub.workspaceId === activeWorkspace.id)
-                  .map(sub => ({
-                    ...sub,
-                    amount: convertCurrency(sub.amount, oldCurrency, newCurrency, rates),
-                    currency: newCurrency
-                  }));
 
-                // Update local state immediately
-                setSubscriptions(prev => prev.map(sub => {
-                  const converted = convertedSubs.find(cs => cs.id === sub.id);
-                  return converted || sub;
-                }));
-
-                // Update in Supabase
-                convertedSubs.forEach(async (sub) => {
-                  await supabase
-                    .from('subscriptions')
-                    .update({ amount: sub.amount, currency: sub.currency })
-                    .eq('id', sub.id);
-                });
-
-                // Also update the workspace currency (this will be handled by onChangeCurrency visually, but good to ensure)
-              }
-            }}
             onUpdateBudget={(budget) => {
               if (activeWorkspace) {
                 updateWorkspace(activeWorkspace.id, { monthlyBudget: budget });
