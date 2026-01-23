@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Spendyx</string>
+    <string name="title_activity_main">Spendyx</string>
+    <string name="package_name">com.jwr.spendyx</string>
+    <string name="custom_url_scheme">com.jwr.spendyx</string>
+</resources>

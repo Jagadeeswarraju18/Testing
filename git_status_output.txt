@@ -1,0 +1,43 @@
+On branch main
+
+No commits yet
+
+Changes to be committed:
+  (use "git rm --cached <file>..." to unstage)
+	new file:   package.json
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	.gitignore
+	App.tsx
+	LEGAL.md
+	LEGAL_PLAIN.txt
+	README.md
+	android/
+	capacitor.config.ts
+	components/
+	constants.ts
+	context/
+	db_scripts/
+	generate_icons.py
+	git_status_output.txt
+	index.css
+	index.html
+	index.tsx
+	lib/
+	metadata.json
+	package-lock.json
+	public/
+	services/
+	supabase/
+	test_currency.ts
+	test_debug.txt
+	test_update.ts
+	tsconfig.json
+	types.ts
+	utils.ts
+	utils/
+	vercel.json
+	vite-env.d.ts
+	vite.config.ts
+

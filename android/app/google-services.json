@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "223048250478",
+    "project_id": "subtrack-9977e",
+    "storage_bucket": "subtrack-9977e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:223048250478:android:484b235dad03c81e16a27f",
+        "android_client_info": {
+          "package_name": "com.jwr.spendyx"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD3Hnf7_-mj6Kx6eqSiFNjRPkr8sjVgR2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

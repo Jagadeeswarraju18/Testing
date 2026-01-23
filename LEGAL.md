@@ -1,0 +1,57 @@
+# Legal Documents for Spendyx
+
+You need to host these policies online (e.g., GitHub Pages, your website, or a simple Google Doc link) and update the links in `Settings.tsx`.
+
+---
+
+## 🔒 Privacy Policy
+
+**Effective Date:** 2024-01-01
+
+**1. Introduction**
+Spendyx ("we", "our", or "us") is committed to protecting your privacy. This Privacy Policy explains how your personal information is collected, used, and disclosed by Spendyx.
+
+**2. Information We Collect**
+- **Personal Information:** We collect your name, email address, and profile picture to create your account.
+- **Financial Data:** We do **not** store your credit card information. Payments are processed via Google Play Store.
+- **Subscription Data:** We store the subscription details you manually enter (name, cost, renewal date) to provide the service.
+
+**3. How We Use Your Information**
+- To provide and maintain our Service.
+- To notify you about subscription renewals.
+- To provide customer support.
+
+**4. Data Security**
+We use industry-standard encryption to protect your data. Your data is stored securely in the cloud.
+
+**5. Data Processors (Sub-processors)**
+To provide our service, we share data with the following trusted third-party providers:
+- **Supabase**: Authentication, Database, and secure backend hosting (GDPR compliant).
+- **RevenueCat**: Management of app subscriptions and purchase tracking.
+- **Razorpay**: Payment processing for web users (if applicable).
+- **Google Play**: Payment processing for Android users.
+
+**6. Contact Us**
+If you have any questions about this Privacy Policy, please contact us at: support@spendyx.app
+
+---
+
+## ⚖️ Terms of Service
+
+**1. Acceptance of Terms**
+By accessing or using Spendyx, you agree to be bound by these Terms. If you disagree with any part of the terms, you may not access the Service.
+
+**2. Subscriptions**
+Some parts of the Service are billed on a subscription basis ("Premium"). You will be billed in advance on a recurring and periodic basis (such as monthly or annually).
+
+**3. Free Plan Limits**
+The Free Plan is limited to 6 active subscriptions across all workspaces. You may upgrade to Premium for unlimited access.
+
+**4. Termination**
+We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms.
+
+**5. Changes**
+We reserve the right, at our sole discretion, to modify or replace these Terms at any time.
+
+**6. Contact Us**
+If you have any questions about these Terms, please contact us at: support@spendyx.app
