@@ -47,7 +47,7 @@ interface ErrorBoundaryState {
   retryCount: number;
 }
 
-class ErrorBoundary extends (React.Component as any)<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, retryCount: 0 };
@@ -100,18 +100,15 @@ class ErrorBoundary extends (React.Component as any)<ErrorBoundaryProps, ErrorBo
               </button>
             </div>
 
-            {this.state.retryCount > 2 && (
-              <p className="text-xs text-gray-400 mt-4">
-                Tried {this.state.retryCount} times. If this persists, please contact support.
-              </p>
+            {this.state.error && (
+              <details className="mt-6 text-left">
+                <summary className="text-xs text-gray-400 cursor-pointer text-center">Technical Details</summary>
+                <pre className="bg-gray-50 p-3 rounded-lg text-[10px] text-gray-500 overflow-auto max-h-32 mt-2">
+                  {this.state.error.message}
+                  {this.state.error.stack}
+                </pre>
+              </details>
             )}
-
-            <details className="mt-6 text-left">
-              <summary className="text-xs text-gray-400 cursor-pointer">Technical Details</summary>
-              <pre className="bg-gray-50 p-3 rounded-lg text-[10px] text-gray-500 overflow-auto max-h-32 mt-2">
-                {this.state.error?.toString()}
-              </pre>
-            </details>
           </div>
         </div>
       );
@@ -1386,10 +1383,10 @@ const MainApp: React.FC = () => {
     );
   };
 
-  if (initializing) return <div className="flex h-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
+  if (initializing && Capacitor.isNativePlatform()) return <div className="flex h-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
 
-  // Show splash screen first on app launch
-  if (showSplash) return <SplashScreen onComplete={() => setShowSplash(false)} duration={2500} />;
+  // Show splash screen first on app launch (Native only)
+  if (showSplash && Capacitor.isNativePlatform()) return <SplashScreen onComplete={() => setShowSplash(false)} duration={2500} />;
 
   if (showAuth) {
     // On Web, show Landing Page first if not dismissed
