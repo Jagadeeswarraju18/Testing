@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Subscription } from '../types';
 import ServiceLogo from './ServiceLogo';
-import { formatCurrency, convertCurrency, getUserShare, isSharedSubscription } from '../utils';
+import { formatCurrency, convertCurrency, getUserShare, isSharedSubscription, getSubscriptionStatus } from '../utils';
 import { CheckCircle, Circle, Info as InfoIcon, Users } from 'lucide-react';
 
 interface SubscriptionCardProps {
@@ -11,10 +11,13 @@ interface SubscriptionCardProps {
     rates?: Record<string, number>;
     onSelect: (sub: Subscription) => void;
     onMarkAsUsed: (id: string) => void;
+    onMarkAsPaid?: (sub: Subscription) => void;
     selectionMode?: boolean;
     isSelected?: boolean;
     onToggleSelection?: (id: string) => void;
     isBusiness?: boolean;
+    isLocked?: boolean;
+    isSharedWithFamily?: boolean; // V2: True if this sub is shared with family group
 }
 
 const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
@@ -23,10 +26,14 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     rates,
     onSelect,
     onMarkAsUsed,
+    onMarkAsPaid,
     selectionMode = false,
     isSelected = false,
     onToggleSelection,
-    isBusiness = false
+    isBusiness = false,
+    isLocked = false,
+    isSharedWithFamily = false,
+    onLockedClick
 }) => {
     // Currency Conversion - Use USER'S SHARE
     let sourceAmount = sub.amount;
@@ -50,26 +57,22 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
 
     const isShared = isSharedSubscription(sub.sharedWith);
 
-    // Days Left Calculation
+    // Days Left Calculation - Payment Mode Aware
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize to midnight
+    today.setHours(0, 0, 0, 0);
 
     const renewal = new Date(sub.renewalDate);
-    renewal.setHours(0, 0, 0, 0); // Normalize to midnight
-
-    // Fix: Handle timezone offsets if renewalDate string is parsed as UTC but local midnight differs
-    // Ideally, sub.renewalDate is YYYY-MM-DD.
-    // If we parse "2025-01-29" in local time, it is correct.
+    renewal.setHours(0, 0, 0, 0);
 
     const diffTime = renewal.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    let daysLeftText = `${diffDays} days left`;
-    let isUrgent = false;
+    // Use payment mode to determine status text
+    const paymentMode = sub.paymentMode || 'auto_renew'; // Default to auto_renew
+    const status = getSubscriptionStatus(sub.renewalDate, paymentMode, sub.lastPaidDate);
 
-    if (diffDays === 0) { daysLeftText = "Due Today"; isUrgent = true; }
-    if (diffDays === 1) { daysLeftText = "Tomorrow"; isUrgent = true; }
-    if (diffDays < 0) { const absDays = Math.abs(diffDays); daysLeftText = `${absDays} ${absDays === 1 ? 'day' : 'days'} overdue`; isUrgent = true; }
+    let daysLeftText = status.label;
+    let isUrgent = status.type === 'overdue' || status.type === 'due';
 
     // Business Warning Logic
     let autoRenewWarning = null;
@@ -103,6 +106,19 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
     const isUsed = daysSinceUsed <= 30;
 
     const handleClick = (e: React.MouseEvent) => {
+        if (isLocked) {
+            // Prevent interaction if locked
+            // Ideally, we should trigger the "Upgrade" flow here.
+            // Since we don't have the callback passed directly for "onUpgrade",
+            // we can rely on the parent (onSelect) or just alert for now.
+            // But better: onSelect(sub) might handle it if it checks lock status?
+            // No, onSelect opens detail.
+            // I will emulate a "soft block" here or just allow select but show lock in detail?
+            // User requirement: "Clicking shows 'Upgrade' toast".
+            if (onLockedClick) onLockedClick();
+            return;
+        }
+
         if (selectionMode && onToggleSelection) {
             e.stopPropagation(); // Prevent detailed view opening
             onToggleSelection(sub.id);
@@ -124,12 +140,21 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             animate={{ y: 0, opacity: 1, scale: isSelected ? 0.98 : 1 }}
             whileHover={{ y: selectionMode ? 0 : -5, scale: selectionMode ? 1 : 1.02, zIndex: 10, transition: { duration: 0.2 } }}
             onClick={handleClick}
-            className={`p-4 rounded-[1.25rem] shadow-[0_4px_20px_rgb(0,0,0,0.05)] flex flex-col md:flex-row md:items-center justify-between relative cursor-pointer border transition-colors ${isSelected
+            className={`p-4 rounded-[1.25rem] shadow-[0_4px_20px_rgb(0,0,0,0.05)] flex flex-col md:flex-row md:items-center justify-between relative cursor-pointer border transition-colors overflow-hidden ${isSelected
                 ? 'bg-indigo-50 border-indigo-500 ring-1 ring-indigo-500'
                 : 'bg-white border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md'
                 }`}
         >
-            <div className="flex items-start gap-4 flex-1">
+            {/* LOCKED OVERLAY */}
+            {isLocked && (
+                <div className="absolute inset-0 z-50 bg-white/60 backdrop-blur-[2px] flex items-center justify-center rounded-[1.25rem]">
+                    <div className="bg-gray-900/90 text-white px-3 py-1.5 rounded-full flex items-center gap-2 shadow-lg scale-90">
+                        <span className="text-xs font-bold">🔒 Locked</span>
+                    </div>
+                </div>
+            )}
+
+            <div className={`flex items-start gap-4 flex-1 ${isLocked ? 'blur-sm opacity-50' : ''}`}>
                 {selectionMode && (
                     <motion.div
                         initial={{ scale: 0, opacity: 0 }}
@@ -173,6 +198,14 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                                 Trial
                             </span>
                         )}
+
+                        {/* Family Sharing Badge (V2) */}
+                        {isSharedWithFamily && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md inline-block bg-purple-100 text-purple-700 flex items-center gap-1">
+                                <Users size={10} />
+                                Family
+                            </span>
+                        )}
                     </div>
 
                     {showBusinessUI && (
@@ -211,7 +244,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 </div>
             </div>
 
-            <div className="mt-4 md:mt-0 md:text-right flex-shrink-0 flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 pt-3 md:pt-0 border-gray-50 md:pl-4">
+            <div className={`mt-4 md:mt-0 md:text-right flex-shrink-0 flex flex-row md:flex-col items-center md:items-end justify-between md:justify-center border-t md:border-t-0 pt-3 md:pt-0 border-gray-50 md:pl-4 ${isLocked ? 'blur-sm opacity-50' : ''}`}>
                 <div className="flex flex-col items-start md:items-end">
                     <div className="flex items-center gap-1">
                         <p className="font-black text-gray-900 text-base leading-tight">
@@ -265,6 +298,15 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                             >
                                 {showBusinessUI ? 'Cancel Request' : 'Cancel'}
                             </a>
+                        )}
+                        {/* Mark as Paid button for overdue manual_pay subscriptions */}
+                        {paymentMode === 'manual_pay' && status.type === 'overdue' && onMarkAsPaid && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onMarkAsPaid(sub); }}
+                                className="text-[10px] bg-green-100 hover:bg-green-200 text-green-700 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1"
+                            >
+                                💵 Mark Paid
+                            </button>
                         )}
                         {/* Used Status / Action */}
                         {!sub.tags?.includes('Trial') && (

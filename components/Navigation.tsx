@@ -18,7 +18,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentTab, setCurrentTab, onAd
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-md bg-white/90 backdrop-blur-xl rounded-t-[32px] border-t border-white/20 pb-safe pt-3 px-4 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl rounded-t-[32px] border-t border-white/20 pb-safe pt-3 px-4 shadow-[0_-8px_32px_rgba(0,0,0,0.12)] z-50">
       <div className="grid grid-cols-5 items-end relative pb-2">
         {/* Center Add Button Float */}
         <div className="absolute left-1/2 -translate-x-1/2 -top-10 pointer-events-none">

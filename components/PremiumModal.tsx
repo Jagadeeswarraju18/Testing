@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Check, Star, Zap, Shield, Infinity as InfinityIcon, Users, CreditCard, Loader2 } from 'lucide-react';
-import { formatCurrency, convertCurrency } from '../utils';
+import { formatCurrency, convertCurrency, isUserPremium } from '../utils';
 import { Capacitor } from '@capacitor/core';
 import { supabase } from '../lib/supabase';
 import { getOfferings } from '../services/purchaseService';
@@ -45,9 +45,10 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
 
             // WEB: Static Pricing (Razorpay)
             if (!Capacitor.isNativePlatform()) {
-                setMonthlyPrice(59);
-                setMonthlyPriceString('₹59');
-                setYearlyPrice(499); // Placeholder
+                setMonthlyPrice(45);
+                setMonthlyPriceString('₹45');
+                setYearlyPrice(500);
+                setYearlyPriceString('₹500');
                 setYearlyPriceString('₹499');
                 setStoreCurrency('INR');
                 setPricesLoading(false);
@@ -196,98 +197,140 @@ const PremiumModal: React.FC<PremiumModalProps> = ({
                         </div>
 
                         {/* Plan Cards */}
+                        {/* Plan Cards or Active Status */}
                         <div className="space-y-3">
-                            {/* Yearly Plan (Hidden on Web) */}
-                            {Capacitor.isNativePlatform() && (
-                                <button
-                                    onClick={() => setSelectedPlan('yearly')}
-                                    className={`w-full relative p-1 rounded-2xl group transition-all ${selectedPlan === 'yearly'
-                                        ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-200'
-                                        : 'bg-transparent'
-                                        }`}
-                                >
-                                    <div className={`relative p-4 rounded-xl flex items-center justify-between ${selectedPlan === 'yearly' ? 'bg-white' : 'bg-gray-50 border border-gray-100'
-                                        }`}>
-                                        {selectedPlan === 'yearly' && (
-                                            <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-xl">
-                                                Best Value
-                                            </div>
-                                        )}
+                            {isUserPremium(user) ? (
+                                <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 text-center">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-amber-200">
+                                        <Check size={32} className="text-white" strokeWidth={3} />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-1">Premium Active</h3>
+                                    <p className="text-gray-500 text-sm mb-4">
+                                        You have full access to all features.
+                                    </p>
 
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPlan === 'yearly' ? 'border-indigo-500' : 'border-gray-300'
-                                                }`}>
-                                                {selectedPlan === 'yearly' && <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />}
-                                            </div>
-                                            <div className="text-left">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="font-bold text-gray-900">Yearly</span>
-                                                    {yearlySavingsPercent > 0 && (
-                                                        <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold">
-                                                            Save {yearlySavingsPercent}%
-                                                        </span>
-                                                    )}
+                                    {user?.premiumExpiryDate && (
+                                        <div className="inline-block px-3 py-1 bg-white rounded-full border border-amber-100 text-amber-700 text-xs font-bold mb-4 shadow-sm">
+                                            Valid until {new Date(user.premiumExpiryDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </div>
+                                    )}
+
+                                    {!Capacitor.isNativePlatform() && (
+                                        <p className="text-xs text-gray-400 mt-2">
+                                            To manage or cancel, please check your email for the Razorpay invoice or contact support.
+                                        </p>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Yearly Plan (Visible on Web & Native) */}
+                                    <button
+                                        onClick={() => setSelectedPlan('yearly')}
+                                        className={`w-full relative p-1 rounded-2xl group transition-all ${selectedPlan === 'yearly'
+                                            ? 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 shadow-lg shadow-indigo-200'
+                                            : 'bg-transparent'
+                                            }`}
+                                    >
+                                        <div className={`relative p-4 rounded-xl flex items-center justify-between ${selectedPlan === 'yearly' ? 'bg-white' : 'bg-gray-50 border border-gray-100'
+                                            }`}>
+                                            {selectedPlan === 'yearly' && (
+                                                <div className="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-xl">
+                                                    Best Value
                                                 </div>
-                                                <p className="text-xs text-gray-500 mt-0.5">Pay upfront for 12 months</p>
+                                            )}
+
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPlan === 'yearly' ? 'border-indigo-500' : 'border-gray-300'
+                                                    }`}>
+                                                    {selectedPlan === 'yearly' && <div className="w-2.5 h-2.5 rounded-full bg-indigo-50500" />}
+                                                </div>
+                                                <div className="text-left">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="font-bold text-gray-900">Yearly</span>
+                                                        {yearlySavingsPercent > 0 && (
+                                                            <span className="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded-md font-bold">
+                                                                Save {yearlySavingsPercent}%
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 mt-0.5">Pay upfront for 12 months</p>
+                                                </div>
+                                            </div>
+
+                                            <div className="text-right mt-4">
+                                                {pricesLoading ? (
+                                                    <Loader2 size={16} className="animate-spin text-gray-400" />
+                                                ) : (
+                                                    <>
+                                                        <span className="block text-lg font-black text-gray-900">{displayYearly}</span>
+                                                        <span className="text-[10px] text-gray-400">/year</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
+                                    </button>
 
-                                        <div className="text-right mt-4">
+                                    {/* Monthly Plan */}
+                                    <button
+                                        onClick={() => setSelectedPlan('monthly')}
+                                        className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${selectedPlan === 'monthly'
+                                            ? 'border-indigo-500 bg-indigo-50/50'
+                                            : 'border-gray-100 bg-white hover:border-gray-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPlan === 'monthly' ? 'border-indigo-500' : 'border-gray-300'
+                                                }`}>
+                                                {selectedPlan === 'monthly' && <div className="w-2.5 h-2.5 rounded-full bg-indigo-50" />}
+                                            </div>
+                                            <div className="text-left">
+                                                <span className="font-bold text-gray-900 block">Monthly</span>
+                                                <p className="text-xs text-gray-500 mt-0.5">Short term flexibility</p>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
                                             {pricesLoading ? (
                                                 <Loader2 size={16} className="animate-spin text-gray-400" />
                                             ) : (
                                                 <>
-                                                    <span className="block text-lg font-black text-gray-900">{displayYearly}</span>
-                                                    <span className="text-[10px] text-gray-400">/year</span>
+                                                    <span className="block text-lg font-black text-gray-900">{displayMonthly}</span>
+                                                    <span className="text-[10px] text-gray-400">/month</span>
                                                 </>
                                             )}
                                         </div>
-                                    </div>
-                                </button>
-                            )}
+                                    </button>
 
-                            {/* Monthly Plan */}
-                            <button
-                                onClick={() => setSelectedPlan('monthly')}
-                                className={`w-full p-4 rounded-2xl border-2 flex items-center justify-between transition-all ${selectedPlan === 'monthly'
-                                    ? 'border-indigo-500 bg-indigo-50/50'
-                                    : 'border-gray-100 bg-white hover:border-gray-200'
-                                    }`}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${selectedPlan === 'monthly' ? 'border-indigo-500' : 'border-gray-300'
-                                        }`}>
-                                        {selectedPlan === 'monthly' && <div className="w-2.5 h-2.5 rounded-full bg-indigo-50" />}
-                                    </div>
-                                    <div className="text-left">
-                                        <span className="font-bold text-gray-900 block">Monthly</span>
-                                        <p className="text-xs text-gray-500 mt-0.5">Short term flexibility</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    {pricesLoading ? (
-                                        <Loader2 size={16} className="animate-spin text-gray-400" />
-                                    ) : (
-                                        <>
-                                            <span className="block text-lg font-black text-gray-900">{displayMonthly}</span>
-                                            <span className="text-[10px] text-gray-400">/month</span>
-                                        </>
+                                    {!Capacitor.isNativePlatform() && !isSameCurrency && (
+                                        <div className="text-center">
+                                            <p className="text-[10px] text-gray-400 bg-gray-50 inline-block px-2 py-1 rounded-full border border-gray-100">
+                                                * You will be billed in {storeCurrency} ({storeCurrency === 'INR' ? '₹' : storeCurrency}). Your bank handles the conversion.
+                                            </p>
+                                        </div>
                                     )}
-                                </div>
-                            </button>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     {/* Footer Actions */}
                     <div className="p-6 border-t border-gray-100 bg-gray-50 shrink-0">
-                        <button
-                            onClick={() => onUpgrade(selectedPlan)}
-                            disabled={isLoading}
-                            className="w-full py-4 rounded-xl bg-gray-900 text-white font-bold text-base shadow-xl shadow-gray-200 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
-                        >
-                            {isLoading ? 'Processing...' : `Get ${selectedPlan === 'yearly' ? 'Yearly' : 'Monthly'} Plan`}
-                            {!isLoading && <Zap size={18} className="text-amber-400 fill-amber-400 group-hover:scale-110 transition-transform" />}
-                        </button>
+                        {isUserPremium(user) ? (
+                            <button
+                                onClick={onClose}
+                                className="w-full py-4 rounded-xl bg-gray-200 text-gray-800 font-bold text-base hover:bg-gray-300 transition-colors"
+                            >
+                                Close
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => onUpgrade(selectedPlan)}
+                                disabled={isLoading}
+                                className="w-full py-4 rounded-xl bg-gray-900 text-white font-bold text-base shadow-xl shadow-gray-200 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+                            >
+                                {isLoading ? 'Processing...' : `Get ${selectedPlan === 'yearly' ? 'Yearly' : 'Monthly'} Plan`}
+                                {!isLoading && <Zap size={18} className="text-amber-400 fill-amber-400 group-hover:scale-110 transition-transform" />}
+                            </button>
+                        )}
 
                         {Capacitor.isNativePlatform() && (
                             <button

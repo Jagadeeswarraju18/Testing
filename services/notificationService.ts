@@ -107,9 +107,9 @@ export const saveFCMToken = async (token: string) => {
  * To re-enable local notifications as fallback, remove the early return below.
  */
 export const scheduleSubscriptionReminders = async (subscriptions: Subscription[]) => {
-    // Server-side notifications are now primary - skip local scheduling to prevent duplicates
-    console.log('[Notifications] Local scheduling disabled - using server-side push notifications');
-    return;
+    // Local notifications act as a fallback and instant feedback mechanism
+    // We clear existing ones to avoid duplicates before rescheduling
+    console.log('[Notifications] Scheduling local notifications...');
 
     try {
         // Cancel all existing scheduled notifications first
@@ -158,35 +158,53 @@ export const scheduleSubscriptionReminders = async (subscriptions: Subscription[
 
                     // Only schedule future reminders (compare against NOW, not midnight)
                     if (scheduleTime > now) {
-                        const isNag = i > 0;
                         console.log(`[Notifications] Scheduling ${sub.name} reminder at ${scheduleTime.toISOString()} (repeat ${i + 1}/${validRepeats})`);
 
-                        // Human-readable day text
-                        const dayText = daysBefore === 0 ? 'today' : daysBefore === 1 ? 'tomorrow' : `in ${daysBefore} days`;
+                        // Human-readable day text matches Web Logic
+                        const dayText = daysBefore === 0 ? 'today' : daysBefore === 1 ? 'day' : 'days';
+                        const daysLabel = daysBefore > 0 && daysBefore !== 1 ? 'days' : 'day'; // Grammar fix
 
+                        // Payment Mode Logic
+                        const isManual = sub.paymentMode === 'manual_pay';
+                        const action = isManual ? 'is due' : 'renews';
 
+                        let title = '';
+                        let body = '';
+
+                        if (daysBefore === 0) {
+                            title = isManual ? `Payment Due Today: ${sub.name}` : `Renewing Today: ${sub.name}`;
+                            body = `Your ${sub.name} subscription ${action} today! Amount: ${formatCurrency(sub.amount, sub.currency)}`;
+                        } else {
+                            title = isManual ? `Payment Due Soon: ${sub.name}` : `Upcoming Renewal: ${sub.name}`;
+                            body = `Your ${sub.name} subscription ${action} in ${daysBefore} ${daysBefore === 1 ? 'day' : 'days'}. Amount: ${formatCurrency(sub.amount, sub.currency)}`;
+                        }
 
                         notifications.push({
                             id: notificationId++,
-                            title: `⏰ ${sub.name} renews ${dayText}`,
-                            body: `${formatCurrency(sub.amount, sub.currency)} will be charged automatically.\nCancel or review if you're not using it.`,
+                            title: title,
+                            body: body,
                             schedule: { at: scheduleTime },
                             sound: 'default',
                             smallIcon: 'ic_notification',
                             largeIcon: 'ic_launcher',
                         });
                     } else {
-                        console.log(`[Notifications] Skipped past notification for ${sub.name} at ${scheduleTime.toISOString()}`);
+                        // console.log(`[Notifications] Skipped past notification for ${sub.name} at ${scheduleTime.toISOString()}`);
                     }
                 }
             });
 
-            // Actual Renewal Day (Initial single notification)
-            if (renewalDate >= now) {
+            // Actual Renewal Day (Initial single notification) - Redundant if 0 is in reminderDays, but good safety net
+            // We check if we already scheduled a "day 0" notification above to avoid duplicates
+            if (renewalDate >= now && !reminderDays.includes(0)) {
+                const isManual = sub.paymentMode === 'manual_pay';
+                const title = isManual ? `Payment Due Today: ${sub.name}` : `Renewing Today: ${sub.name}`;
+                const action = isManual ? 'is due' : 'renews';
+
                 notifications.push({
                     id: notificationId++,
-                    title: `💸 ${sub.name} Payment Due`,
-                    body: `${formatCurrency(sub.amount, sub.currency)} will be charged today.\nReview your subscription now.`,
+                    title: title,
+                    body: `Your ${sub.name} subscription ${action} today! Amount: ${formatCurrency(sub.amount, sub.currency)}`,
                     schedule: { at: renewalDate },
                     sound: 'default',
                     smallIcon: 'ic_notification',
@@ -324,13 +342,20 @@ export const checkReminders = (subscriptions: Subscription[]) => {
         const reminderDays = sub.reminderDays || [3];
 
         if (reminderDays.includes(diffDays)) {
-            new Notification(`Upcoming Renewal: ${sub.name}`, {
-                body: `Your ${sub.name} subscription renews in ${diffDays} days. Amount: ${sub.currency} ${sub.amount}`,
+            const daysText = diffDays === 1 ? 'day' : 'days';
+            const action = sub.paymentMode === 'manual_pay' ? 'is due' : 'renews';
+            const title = sub.paymentMode === 'manual_pay' ? `Payment Due Soon: ${sub.name}` : `Upcoming Renewal: ${sub.name}`;
+
+            new Notification(title, {
+                body: `Your ${sub.name} subscription ${action} in ${diffDays} ${daysText}. Amount: ${formatCurrency(sub.amount, sub.currency)}`,
                 icon: sub.logoUrl || '/vite.svg'
             });
         } else if (diffDays === 0) {
-            new Notification(`Payment Due Today: ${sub.name}`, {
-                body: `Your ${sub.name} subscription renews today! Amount: ${sub.currency} ${sub.amount}`,
+            const action = sub.paymentMode === 'manual_pay' ? 'is due' : 'renews';
+            const title = sub.paymentMode === 'manual_pay' ? `Payment Due Today: ${sub.name}` : `Renewing Today: ${sub.name}`;
+
+            new Notification(title, {
+                body: `Your ${sub.name} subscription ${action} today! Amount: ${formatCurrency(sub.amount, sub.currency)}`,
                 icon: sub.logoUrl || '/vite.svg'
             });
         }

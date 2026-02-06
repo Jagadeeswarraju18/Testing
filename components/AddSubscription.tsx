@@ -2,10 +2,10 @@ import React, { useState, useCallback } from 'react';
 import { POPULAR_PROVIDERS } from '../constants';
 import { BillingCycle, SubscriptionStatus } from '../types';
 import { useWorkspace } from '../context/WorkspaceContext';
-import { X, Search, Check, Trash2, Building2, Users, UserPlus, XCircle, Mic, MicOff } from 'lucide-react';
+import { X, Search, Check, Trash2, Building2, Users, UserPlus, XCircle, Mic, MicOff, RefreshCw, Banknote, CreditCard, Tag, Calendar } from 'lucide-react';
 import SeatTracker from './SeatTracker';
 import { motion } from 'framer-motion';
-import { getCurrencySymbol, convertCurrency } from '../utils';
+import { getCurrencySymbol, convertCurrency, isAutoRenewService } from '../utils';
 import ServiceLogo from './ServiceLogo';
 import Dropdown from './Dropdown';
 import { VoiceService } from '../services/VoiceService';
@@ -72,7 +72,10 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ onClose, onSave, onDe
     department: initialData?.department || '',
 
     ownerUserId: initialData?.ownerUserId || '',
-    ownerName: initialData?.ownerName || ''
+    ownerName: initialData?.ownerName || '',
+
+    // Payment Mode (auto_renew vs manual_pay)
+    paymentMode: initialData?.paymentMode || 'auto_renew'
   });
 
   const [newMemberName, setNewMemberName] = useState('');
@@ -589,11 +592,12 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ onClose, onSave, onDe
                     </div>
                   </div>
                   <div className="flex-1">
+                    <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Billing Cycle</label>
                     <Dropdown
-                      label="Cycle"
                       options={Object.values(BillingCycle)}
                       value={formData.billingCycle}
                       onChange={(val) => setFormData({ ...formData, billingCycle: val as BillingCycle })}
+                      className="w-full"
                     />
                   </div>
 
@@ -624,6 +628,35 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ onClose, onSave, onDe
                     </div>
                   )}
 
+                </div>
+
+                {/* Payment Mode Toggle - Beautiful & Dark */}
+                <div className="py-2">
+                  <label className="text-xs font-semibold text-gray-500 uppercase block mb-2">Payment Type</label>
+                  <div className="flex bg-gray-50 rounded-xl p-1 border border-gray-100">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, paymentMode: 'auto_renew' })}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${formData.paymentMode === 'auto_renew'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                        : 'text-gray-500 hover:bg-gray-200'
+                        }`}
+                    >
+                      <RefreshCw size={16} className={formData.paymentMode === 'auto_renew' ? 'animate-[spin_3s_linear_infinite]' : ''} />
+                      Auto-Renew
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, paymentMode: 'manual_pay' })}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-bold transition-all ${formData.paymentMode === 'manual_pay'
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                        : 'text-gray-500 hover:bg-gray-200'
+                        }`}
+                    >
+                      <Banknote size={16} />
+                      Manual Pay
+                    </button>
+                  </div>
                 </div>
 
                 {/* Split the Bill - Family/Group Sharing */}
@@ -703,7 +736,9 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ onClose, onSave, onDe
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">First Renewal</label>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-1 flex items-center gap-1">
+                    <Calendar size={12} /> First Renewal
+                  </label>
                   <input
                     type="date"
                     value={formData.renewalDate}
@@ -715,21 +750,27 @@ const AddSubscription: React.FC<AddSubscriptionProps> = ({ onClose, onSave, onDe
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Payment Method</label>
-                    <input
-                      value={formData.paymentMethod}
-                      onChange={e => setFormData({ ...formData, paymentMethod: e.target.value })}
-                      className="w-full text-base border-b border-gray-200 py-2 focus:outline-none focus:border-primary bg-transparent placeholder-gray-300"
-                      placeholder="Card, UPI..."
-                    />
+                    <div className="relative">
+                      <CreditCard size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        value={formData.paymentMethod}
+                        onChange={e => setFormData({ ...formData, paymentMethod: e.target.value })}
+                        className="w-full text-base border-b border-gray-200 py-2 pl-6 focus:outline-none focus:border-primary bg-transparent placeholder-gray-300"
+                        placeholder="Card, UPI..."
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-gray-500 uppercase mb-1">Tags</label>
-                    <input
-                      value={formData.tags}
-                      onChange={e => setFormData({ ...formData, tags: e.target.value })}
-                      className="w-full text-base border-b border-gray-200 py-2 focus:outline-none focus:border-primary bg-transparent placeholder-gray-300"
-                      placeholder="Work, Shared..."
-                    />
+                    <div className="relative">
+                      <Tag size={16} className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400" />
+                      <input
+                        value={formData.tags}
+                        onChange={e => setFormData({ ...formData, tags: e.target.value })}
+                        className="w-full text-base border-b border-gray-200 py-2 pl-6 focus:outline-none focus:border-primary bg-transparent placeholder-gray-300"
+                        placeholder="Work, Shared..."
+                      />
+                    </div>
                   </div>
                 </div>
 

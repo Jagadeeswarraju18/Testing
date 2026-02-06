@@ -29,7 +29,7 @@ serve(async (req) => {
         // 2. Parse Body
         const { planType } = await req.json();
 
-        // New Plan IDs (Hardcoded for reliability)
+        // Production Plan IDs
         const PLANS = {
             monthly: 'plan_S6Qj7PYygTN31p',
             yearly: 'plan_S6RDBurzZ8pgvV'
@@ -63,7 +63,7 @@ serve(async (req) => {
             },
             body: JSON.stringify({
                 plan_id: targetPlanId,
-                total_count: 120, // 10 years
+                total_count: planType === 'yearly' ? 10 : 120, // 10 Years duration for both
                 quantity: 1,
                 customer_notify: 1,
                 notes: {
@@ -88,7 +88,7 @@ serve(async (req) => {
     } catch (error) {
         return new Response(
             JSON.stringify({ error: error.message }),
-            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
     }
 });

@@ -16,11 +16,15 @@ interface SubscriptionListProps {
   rates?: Record<string, number>;
   categories?: { id: string, name: string, icon: string }[];
   onMarkAsUsed: (id: string) => void;
+  onMarkAsPaid?: (sub: Subscription) => void;
   onBulkDelete?: (ids: string[]) => void;
   onBulkMarkUsed?: (ids: string[]) => void;
   monthlyBudget?: number;
   isBusiness?: boolean;
   filterMode?: 'none' | 'unused_seats';
+  isPremium?: boolean;
+  lockedIds?: Set<string>;
+  onLockedClick?: () => void;
 }
 
 type SortOption = 'price_high' | 'price_low' | 'date_new' | 'date_old' | 'name_asc' | 'name_desc';
@@ -34,11 +38,15 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({
   rates,
   categories = [],
   onMarkAsUsed,
+  onMarkAsPaid,
   onBulkDelete,
   onBulkMarkUsed,
   monthlyBudget,
   isBusiness,
-  filterMode = 'none'
+  filterMode = 'none',
+  isPremium,
+  lockedIds,
+  onLockedClick
 }) => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<SortOption>(filterMode === 'unused_seats' ? 'price_high' : 'date_new');
@@ -529,9 +537,12 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({
               rates={rates}
               onSelect={onSelect}
               onMarkAsUsed={onMarkAsUsed}
+              onMarkAsPaid={onMarkAsPaid}
               selectionMode={isSelectionMode}
               isSelected={selectedIds.has(sub.id)}
               onToggleSelection={toggleSelection}
+              isLocked={lockedIds?.has(sub.id)}
+              onLockedClick={onLockedClick}
             />
           ))}
         </AnimatePresence>

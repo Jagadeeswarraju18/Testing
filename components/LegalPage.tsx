@@ -46,7 +46,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ type, onBack }) => {
                             <h2 className="text-xl font-bold text-gray-900 mb-4 mt-8">2. Information We Collect</h2>
                             <ul className="list-disc pl-5 mb-4 space-y-2">
                                 <li><strong>Personal Information:</strong> We collect your name, email address, and profile picture to create your account.</li>
-                                <li><strong>Financial Data:</strong> We do not store your credit card information. Payments are processed securely via our payment partners (Google Play Store, Razorpay).</li>
+                                <li><strong>Financial Data:</strong> We do <strong>not</strong> store your credit card information. Payments are processed securely via our payment partners (Google Play Store, Razorpay, RevenueCat).</li>
                                 <li><strong>Subscription Data:</strong> We store the subscription details you manually enter (name, cost, renewal date) to provide the service.</li>
                             </ul>
 
@@ -60,8 +60,17 @@ const LegalPage: React.FC<LegalPageProps> = ({ type, onBack }) => {
                             <h2 className="text-xl font-bold text-gray-900 mb-4 mt-8">4. Data Security</h2>
                             <p className="mb-4">We use industry-standard encryption to protect your data. Your data is stored securely in the cloud.</p>
 
-                            <h2 className="text-xl font-bold text-gray-900 mb-4 mt-8">5. Contact Us</h2>
-                            <p className="mb-4">If you have any questions about this Privacy Policy, please contact us at: <a href="mailto:support@spendyx.app" className="text-indigo-600 font-medium">support@spendyx.app</a></p>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 mt-8">5. Data Processors (Sub-processors)</h2>
+                            <p className="mb-4">To provide our service, we share data with the following trusted third-party providers:</p>
+                            <ul className="list-disc pl-5 mb-4 space-y-2">
+                                <li><strong>Supabase:</strong> Authentication, Database, and secure backend hosting.</li>
+                                <li><strong>RevenueCat:</strong> Management of app subscriptions and purchase tracking.</li>
+                                <li><strong>Razorpay:</strong> Payment processing for web users.</li>
+                                <li><strong>Google Play:</strong> Payment processing for Android users.</li>
+                            </ul>
+
+                            <h2 className="text-xl font-bold text-gray-900 mb-4 mt-8">6. Contact Us</h2>
+                            <p className="mb-4">If you have any questions about this Privacy Policy, please contact us at: <a href="mailto:jwrstack@gmail.com" className="text-indigo-600 font-medium">jwrstack@gmail.com</a></p>
                         </>
                     ) : (
                         <>
@@ -81,7 +90,7 @@ const LegalPage: React.FC<LegalPageProps> = ({ type, onBack }) => {
                             <p className="mb-4">We reserve the right, at our sole discretion, to modify or replace these Terms at any time.</p>
 
                             <h2 className="text-xl font-bold text-gray-900 mb-4 mt-8">6. Contact Us</h2>
-                            <p className="mb-4">If you have any questions about these Terms, please contact us at: <a href="mailto:support@spendyx.app" className="text-indigo-600 font-medium">support@spendyx.app</a></p>
+                            <p className="mb-4">If you have any questions about these Terms, please contact us at: <a href="mailto:jwrstack@gmail.com" className="text-indigo-600 font-medium">jwrstack@gmail.com</a></p>
                         </>
                     )}
                 </div>

@@ -96,6 +96,11 @@ export interface Subscription {
   previous_amount_date?: string; // When price changed
   original_amount?: number; // Anchor pricing: The original entered amount
   original_currency?: string; // Anchor pricing: The original entered currency
+
+  // Payment Mode (auto_renew vs manual_pay)
+  paymentMode?: 'auto_renew' | 'manual_pay'; // Default: auto_renew
+  lastAutoRenewed?: string; // ISO Date: Prevents multiple auto-advances
+  lastPaidDate?: string; // ISO Date: When user manually marked as paid
 }
 
 export interface Insight {
@@ -114,4 +119,40 @@ export interface ProviderSeed {
   defaultAmount?: number;
   cancellationUrl?: string;
   annualPlanAvailable?: boolean;
+}
+
+// =====================================================
+// Family Sharing V2 Types
+// =====================================================
+
+export interface FamilyGroup {
+  id: string;
+  owner_id: string;
+  name: string;
+  invite_code: string;
+  created_at: string;
+}
+
+export interface FamilyMember {
+  id: string;
+  group_id: string;
+  user_id: string;
+  role: 'owner' | 'member';
+  user?: {
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+}
+
+export interface SharedSubscription {
+  id: string;
+  group_id: string;
+  subscription_id: string;
+  shared_by: string;
+  used_by: string[]; // Array of user_ids who use this subscription
+  created_at: string;
+  // Joined data (populated when fetching)
+  subscription?: Subscription;
+  sharer?: User;
 }

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User as UserIcon, Loader, Globe, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Capacitor } from '@capacitor/core';
+import { Link } from './Link';
 
 interface AuthProps {
     onComplete: (session: any) => void;
@@ -185,7 +186,7 @@ const Auth: React.FC<AuthProps> = ({ onComplete }) => {
                                     />
                                 </div>
                                 <label htmlFor="terms" className="text-xs text-gray-500 leading-tight">
-                                    I agree to the <span className="text-purple-600 font-semibold cursor-pointer">Terms of Service</span> and <span className="text-purple-600 font-semibold cursor-pointer">Privacy Policy</span>.
+                                    I agree to the <Link href="/terms" className="text-purple-600 font-semibold cursor-pointer">Terms of Service</Link> and <Link href="/privacy-policy" className="text-purple-600 font-semibold cursor-pointer">Privacy Policy</Link>.
                                 </label>
                             </div>
                         </div>

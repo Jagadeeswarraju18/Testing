@@ -15,11 +15,13 @@ import ImportModal from './ImportModal';
 import FamilyModal from './FamilyModal';
 import ConfirmationModal from './ConfirmationModal';
 import FAQModal from './FAQModal';
+import PaymentHistoryModal from './PaymentHistoryModal';
 
 interface SettingsProps {
     user: User;
     subscriptions: Subscription[];
     onUpgrade?: () => void;
+    onOpenPremiumModal?: () => void;
     onSignOut: () => void;
     onChangeCurrency: (currency: string, oldCurrency: string, currentBudget: number, timezone: string) => void;
     onImport?: (data: any[]) => void;
@@ -52,6 +54,7 @@ const Settings: React.FC<SettingsProps> = ({
     monthlyBudget,
     isPremium = false,
     onUpgrade,
+    onOpenPremiumModal,
     onImport,
 
     onUpdateProfile,
@@ -121,6 +124,23 @@ const Settings: React.FC<SettingsProps> = ({
 
     const [showNewWorkspaceModal, setShowNewWorkspaceModal] = useState(false);
     const [newWorkspaceName, setNewWorkspaceName] = useState('');
+
+    // Payment History State
+    const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+    const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (user && isPremium) {
+            supabase
+                .from('premium_purchases')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('purchase_date', { ascending: false })
+                .then(({ data }) => {
+                    if (data) setPaymentHistory(data);
+                });
+        }
+    }, [user, isPremium]);
 
     // App Version State
     const [appVersion, setAppVersion] = useState('1.0.0');
@@ -390,7 +410,7 @@ const Settings: React.FC<SettingsProps> = ({
                         <p className="text-gray-400 text-xs">Unlock workspaces, export & more. Starting at $0.50/mo</p>
                     </div>
                     <button
-                        onClick={onUpgrade}
+                        onClick={onOpenPremiumModal}
                         className="bg-white text-gray-900 px-4 py-2 rounded-lg font-bold text-xs hover:bg-gray-100 transition-colors whitespace-nowrap"
                     >
                         {formatCurrency(displayPrice, currency)}/mo
@@ -635,6 +655,8 @@ const Settings: React.FC<SettingsProps> = ({
                                 </AnimatePresence>
                             </div>
                         </div>
+
+
 
                         <div className="p-3 flex justify-between items-center relative z-10">
                             <div className="flex items-center gap-3">
@@ -924,6 +946,7 @@ const Settings: React.FC<SettingsProps> = ({
                             onClose={() => setShowFamilyModal(false)}
                             user={user}
                             currency={currency}
+                            subscriptions={subscriptions}
                         />
                     )}
                 </AnimatePresence>
@@ -932,7 +955,10 @@ const Settings: React.FC<SettingsProps> = ({
                     <h3 className="text-xs font-semibold text-gray-500 uppercase mb-3 ml-1">Legal & Support</h3>
                     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
                         <button
-                            onClick={() => window.open('https://docs.google.com/document/d/1h6VQK57mF6b6UvQyML37uegmIC6-8Te2j79gG3bc1kg/view', '_blank')}
+                            onClick={() => {
+                                window.history.pushState({}, '', '/terms');
+                                window.dispatchEvent(new Event('popstate'));
+                            }}
                             className="w-full p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
                         >
                             <div className="flex items-center gap-3">
@@ -943,7 +969,10 @@ const Settings: React.FC<SettingsProps> = ({
                         </button>
 
                         <button
-                            onClick={() => window.open('https://docs.google.com/document/d/1OR9LlbAJ-7KMIuwbrKV5JSxYk_CQ882mrTg-jT-Ku3k/edit?usp=sharing', '_blank')}
+                            onClick={() => {
+                                window.history.pushState({}, '', '/privacy-policy');
+                                window.dispatchEvent(new Event('popstate'));
+                            }}
                             className="w-full p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
                         >
                             <div className="flex items-center gap-3">
@@ -1017,6 +1046,23 @@ const Settings: React.FC<SettingsProps> = ({
                     </div>
                 </section>
 
+                <section className="mb-8">
+                    <div className="bg-white rounded-xl border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                        {isPremium && (
+                            <button
+                                onClick={() => setShowPaymentHistoryModal(true)}
+                                className="w-full p-4 flex justify-between items-center hover:bg-gray-50 transition-colors"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-purple-50 p-2 rounded-lg text-purple-600"><FileText size={18} /></div>
+                                    <span className="text-sm font-medium text-gray-700">Payment History</span>
+                                </div>
+                                <ChevronRight size={16} className="text-gray-300" />
+                            </button>
+                        )}
+                    </div>
+                </section>
+
                 <button
                     onClick={onSignOut}
                     className="w-full p-4 mt-8 flex items-center justify-center gap-2 text-red-500 font-medium"
@@ -1044,6 +1090,13 @@ const Settings: React.FC<SettingsProps> = ({
                     <FAQModal
                         isOpen={showFAQModal}
                         onClose={() => setShowFAQModal(false)}
+                    />
+                )}
+                {showPaymentHistoryModal && (
+                    <PaymentHistoryModal
+                        isOpen={showPaymentHistoryModal}
+                        onClose={() => setShowPaymentHistoryModal(false)}
+                        history={paymentHistory}
                     />
                 )}
             </AnimatePresence>

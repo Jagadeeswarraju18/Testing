@@ -44,7 +44,7 @@ serve(async (req) => {
         const { data: subscriptions, error: subError } = await supabase
             .from("subscriptions")
             .select(`
-                id, name, amount, currency, "renewalDate", "reminderDays",
+                id, name, amount, currency, "paymentMode", "renewalDate", "reminderDays",
                 notification_time, notification_frequency,
                 "workspaceId",
                 workspaces!inner("ownerId", timezone)
@@ -102,18 +102,25 @@ serve(async (req) => {
 
             console.log(`Queuing notification for ${sub.name} (${diffDays} days, freq: ${notificationFrequency})`);
 
+            const paymentMode = (sub as any).paymentMode || 'auto_renew';
+            const isManual = paymentMode === 'manual_pay';
+            const action = isManual ? 'is due' : 'renews';
+
+            // Grammar fix: 1 day vs X days
+            const dayText = diffDays === 1 ? 'day' : 'days';
+            const daysLabel = diffDays === 1 ? 'tomorrow' : `in ${diffDays} ${dayText}`;
+
             if (diffDays === 0) {
                 notificationsToSend.push({
                     userId: ownerId,
-                    title: `💸 ${sub.name} Payment Due Today`,
-                    body: `${sub.currency} ${sub.amount} will be charged today.\nReview your subscription now.`,
+                    title: isManual ? `💸 ${sub.name} Payment Due Today` : `⚡ Renewing Today: ${sub.name}`,
+                    body: `Your ${sub.name} subscription ${action} today! Amount: ${sub.currency} ${sub.amount}`,
                 });
             } else {
-                const dayText = diffDays === 1 ? "tomorrow" : `in ${diffDays} days`;
                 notificationsToSend.push({
                     userId: ownerId,
-                    title: `⏰ ${sub.name} renews ${dayText}`,
-                    body: `${sub.currency} ${sub.amount} will be charged automatically.\nCancel or review if you're not using it.`,
+                    title: isManual ? `⏰ ${sub.name} Payment Due Soon` : `⏰ Upcoming Renewal: ${sub.name}`,
+                    body: `Your ${sub.name} subscription ${action} ${daysLabel}. Amount: ${sub.currency} ${sub.amount}`,
                 });
             }
         }

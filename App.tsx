@@ -9,6 +9,7 @@ import CalendarView from './components/CalendarView';
 import Settings from './components/Settings';
 import PremiumModal from './components/PremiumModal';
 import ConfirmationModal from './components/ConfirmationModal';
+import MarkAsPaidModal from './components/MarkAsPaidModal';
 import Toast from './components/Toast';
 import Auth from './components/Auth';
 import Onboarding from './components/Onboarding';
@@ -22,7 +23,7 @@ import { INITIAL_SUBSCRIPTIONS, POPULAR_PROVIDERS, CATEGORIES, CURRENCY_TIMEZONE
 import { AnimatePresence } from 'framer-motion';
 import { fetchExchangeRates } from './services/currencyService';
 import { scheduleSubscriptionReminders, initPushNotifications, requestNotificationPermission } from './services/notificationService';
-import { convertCurrency, getCurrencySymbol, isUserPremium } from './utils';
+import { convertCurrency, getCurrencySymbol, isUserPremium, shouldAutoAdvance, calculateNextRenewal, advanceBillingDateFromCycle } from './utils';
 import { WorkspaceProvider, useWorkspace } from './context/WorkspaceContext';
 import { initializePurchases, checkPremiumStatus, restorePurchases, presentPaywall, presentCustomerCenter, addCustomerInfoUpdateListener, getOfferings, purchasePackage } from './services/purchaseService';
 import { createRazorpaySubscription } from './services/razorpayService';
@@ -112,6 +113,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
+import { getLockedSubscriptionIds } from './utils/lockUtils';
+
 const MainApp: React.FC = () => {
   const { activeWorkspace, isBusinessWorkspace, createWorkspace, updateWorkspace, deleteWorkspace, workspaces, loading: workspacesLoading } = useWorkspace();
 
@@ -143,7 +146,18 @@ const MainApp: React.FC = () => {
     window.history.pushState({ tab }, '', url.toString());
   };
 
-  // Listen for Popstate (Browser Back Button)
+  // Persist Tab Selection & History Sync
+  useEffect(() => {
+    if (currentTab) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('tab') !== currentTab) {
+        url.searchParams.set('tab', currentTab);
+        window.history.pushState({}, '', url.toString());
+      }
+    }
+  }, [currentTab]);
+
+
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
       const params = new URLSearchParams(window.location.search);
@@ -211,7 +225,12 @@ const MainApp: React.FC = () => {
   };
 
   const [initializing, setInitializing] = useState(true);
-  const [showLanding, setShowLanding] = useState(!Capacitor.isNativePlatform()); // Default to showing landing on web
+  const [showLanding, setShowLanding] = useState(() => {
+    const isNative = Capacitor.isNativePlatform();
+    // Check if running in standalone mode (PWA installed)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    return !isNative && !isStandalone;
+  });
 
   // Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState<{
@@ -222,6 +241,12 @@ const MainApp: React.FC = () => {
     confirmText: string;
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', type: 'warning', confirmText: 'Confirm', onConfirm: () => { } });
+
+  // Mark As Paid Modal State
+  const [markAsPaidModal, setMarkAsPaidModal] = useState<{
+    isOpen: boolean;
+    subscription: Subscription | null;
+  }>({ isOpen: false, subscription: null });
 
   // Toast State
   const [toast, setToast] = useState<{
@@ -290,6 +315,11 @@ const MainApp: React.FC = () => {
   });
 
   const allCategories = [...CATEGORIES, ...customCategories];
+
+  const lockedIds = React.useMemo(() => {
+    if (!user) return new Set<string>();
+    return getLockedSubscriptionIds(subscriptions, isUserPremium(user));
+  }, [subscriptions, user]);
 
   // Initialize Auth & Rates
   useEffect(() => {
@@ -503,8 +533,30 @@ const MainApp: React.FC = () => {
     if (error) {
       console.error('Error fetching subscriptions:', error);
     } else {
-      setSubscriptions(data || []);
-      // Note: Notifications are scheduled when subscriptions are created/updated, not on fetch
+      // Auto-advance billing dates for auto_renew subscriptions
+      const subsToUpdate: Subscription[] = [];
+      const processedSubs = (data || []).map((sub: Subscription) => {
+        // Check if this sub needs auto-advance
+        if (shouldAutoAdvance(sub.renewalDate, sub.paymentMode, sub.lastAutoRenewed, sub.billingCycle)) {
+          const newRenewalDate = calculateNextRenewal(sub.renewalDate, sub.billingCycle);
+          subsToUpdate.push({ ...sub, renewalDate: newRenewalDate, lastAutoRenewed: new Date().toISOString() });
+          return { ...sub, renewalDate: newRenewalDate, lastAutoRenewed: new Date().toISOString() };
+        }
+        return sub;
+      });
+
+      // Update DB for auto-advanced subs (background, don't await)
+      if (subsToUpdate.length > 0) {
+        subsToUpdate.forEach(sub => {
+          supabase
+            .from('subscriptions')
+            .update({ renewalDate: sub.renewalDate, lastAutoRenewed: sub.lastAutoRenewed })
+            .eq('id', sub.id)
+            .then(() => console.log('[Auto-Advance] Updated:', sub.name, 'to', sub.renewalDate));
+        });
+      }
+
+      setSubscriptions(processedSubs);
     }
   };
 
@@ -583,21 +635,17 @@ const MainApp: React.FC = () => {
     }
 
     // WEB PAYMENT FLOW (Razorpay)
+    // WEB PAYMENT FLOW (Razorpay)
     if (!Capacitor.isNativePlatform()) {
-      if (planType === 'yearly') {
-        showToast("Yearly plan coming soon to web!", "error");
-        return;
-      }
-
       createRazorpaySubscription({
         user,
-        planId: 'monthly', // We strictly use monthly for PWA for now
+        planId: planType || 'monthly', // Now supports both monthly and yearly
         onSuccess: async (response) => {
           console.log("Web Payment Success", response);
           await handleSuccess();
         },
         onFailure: (err) => {
-          showToast("Payment failed or cancelled.", "error");
+          showToast(err.message || "Payment failed or cancelled.", "error");
         }
       });
       return;
@@ -672,7 +720,19 @@ const MainApp: React.FC = () => {
 
   const handleSuccess = async () => {
     // Always re-check premium status to get latest data including expiry
-    const { isPremium: isPremiumNow, expirationDate } = await checkPremiumStatus();
+    let { isPremium: isPremiumNow, expirationDate } = await checkPremiumStatus();
+
+    // WEB EXCEPTION: 
+    // Razorpay webhook is async (takes 1-2s). usage of checkPremiumStatus via DB might be too fast.
+    // If we are on Web and just came from a Success callback, we Optimistically enable Premium.
+    // The Webhook (server-side) will handle the specific Expiry Date calculation and overwrite if needed.
+    if (!Capacitor.isNativePlatform() && !isPremiumNow) {
+      console.log("Optimistic Web Success: Enabling Premium immediately via Client");
+      isPremiumNow = true;
+      // Default to 1 month/1 year from now? Or just null and let webhook fix it?
+      // Let's set a safe default of 30 days so the UI works, Webhook will correct it to 1 year if needed.
+      expirationDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
 
     if (isPremiumNow) {
       // 1. Update DB with status AND expiry
@@ -814,7 +874,7 @@ const MainApp: React.FC = () => {
           .eq('userId', user.id); // Check ALL subscriptions owned by this user
 
         if (!error && (count || 0) >= 6) {
-          showToast(`Global limit reached (${count} active). Upgrade to Premium for unlimited!`, "error");
+          showToast(`Free limit of 6 subscriptions reached across spaces. Upgrade to Premium for unlimited!`, "error");
           setShowPremiumModal(true);
           return;
         }
@@ -928,6 +988,34 @@ const MainApp: React.FC = () => {
     await supabase.from('subscriptions').update({ "lastUsedDate": now }).eq('id', id);
   };
 
+  // Mark as Paid handler for manual_pay subscriptions
+  const handleMarkAsPaid = async (paidDate: string) => {
+    const sub = markAsPaidModal.subscription;
+    if (!sub) return;
+
+    try {
+      // Advance billing date from current billing date (not payment date)
+      const newRenewalDate = advanceBillingDateFromCycle(sub.renewalDate, sub.billingCycle);
+
+      // Update local state
+      setSubscriptions(prev => prev.map(s =>
+        s.id === sub.id ? { ...s, lastPaidDate: paidDate, renewalDate: newRenewalDate } : s
+      ));
+
+      // Update database
+      await supabase.from('subscriptions').update({
+        lastPaidDate: paidDate,
+        renewalDate: newRenewalDate
+      }).eq('id', sub.id);
+
+      setMarkAsPaidModal({ isOpen: false, subscription: null });
+      showToast('Payment recorded! Next due: ' + new Date(newRenewalDate).toLocaleDateString(), 'success');
+    } catch (error) {
+      console.error('Error marking as paid:', error);
+      showToast('Failed to record payment', 'error');
+    }
+  };
+
   const handleDeleteWorkspace = async (id: string) => {
     // Count subscriptions in this workspace
     const subsInWorkspace = subscriptions.filter(s => s.workspaceId === id);
@@ -964,11 +1052,39 @@ const MainApp: React.FC = () => {
       if (sub.currency === newCurrency) return sub;
 
       const newAmount = convertCurrency(sub.amount, sub.currency, newCurrency, rates);
+      let newPreviousAmount = sub.previous_amount;
+      if (sub.previous_amount) {
+        newPreviousAmount = parseFloat(convertCurrency(sub.previous_amount, sub.currency, newCurrency, rates).toFixed(2));
+      }
+
+      let newOriginalAmount = sub.original_amount;
+      if (sub.original_amount && sub.original_currency && sub.original_currency === sub.currency) {
+        // If original was tracked in the old currency, convert it?
+        // Actually, original_amount/currency is supposed to be the Anchor.
+        // If we are converting everything, do we change the Anchor?
+        // User intention: "Switch Dashboard to INR".
+        // Usually valid anchor is the CONTRACT currency.
+        // If I have Netflix (EUR), and switch dashboard to INR, Netflix is still EUR.
+        // BUT `handleBulkCurrencyConvert` explicitly changes `sub.currency`.
+        // This means we are RE-ANCHORING to the new currency?
+        // If so, `original_amount` should probably update or be cleared?
+        // Let's assume we convert it to preserve history relative value.
+        newOriginalAmount = parseFloat(convertCurrency(sub.original_amount, sub.currency, newCurrency, rates).toFixed(2));
+      }
+
+      // Update original currency to new currency if we convert
+      let newOriginalCurrency = sub.original_currency;
+      if (sub.original_amount) {
+        newOriginalCurrency = newCurrency;
+      }
 
       return {
         ...sub,
         currency: newCurrency,
-        amount: parseFloat(newAmount.toFixed(2))
+        amount: parseFloat(newAmount.toFixed(2)),
+        previous_amount: newPreviousAmount,
+        original_amount: newOriginalAmount,
+        original_currency: newOriginalCurrency
       };
     });
 
@@ -1025,7 +1141,7 @@ const MainApp: React.FC = () => {
           confirmText: 'Rate Now',
           cancelText: 'Later',
           onConfirm: () => {
-            window.open('https://play.google.com/store/apps/details?id=your.app.id', '_blank');
+            window.open('https://play.google.com/store/apps/details?id=com.jwr.spendyx', '_blank');
             localStorage.setItem('hasRated', 'true');
             setConfirmModal(prev => ({ ...prev, isOpen: false }));
           }
@@ -1079,8 +1195,8 @@ const MainApp: React.FC = () => {
     if (!user?.isPremium && globalSubscriptionCount >= 6) {
       setConfirmModal({
         isOpen: true,
-        title: 'Global Limit Reached 🔒',
-        message: `You have ${globalSubscriptionCount} active subscriptions across your workspaces. Free plan is limited to 6 total. Upgrade to Premium!`,
+        title: 'Limit Reached 🔒',
+        message: `Free limit of 6 subscriptions reached across spaces. Upgrade to Premium for unlimited!`,
         type: 'info',
         confirmText: 'Upgrade to Unlimited',
         onConfirm: () => {
@@ -1102,19 +1218,74 @@ const MainApp: React.FC = () => {
     if (!user) return null;
     if (!activeWorkspace) return <div className="p-10 text-center opacity-60">Please select a workspace</div>;
 
-    switch (currentTab) {
-      case 'dashboard':
-        return isBusinessWorkspace
-          ? <BusinessDashboard subscriptions={subscriptions} rates={rates} onManage={handleManage} currency={activeWorkspace.currency} onViewWaste={handleViewWaste} />
-          : <PersonalDashboard user={user!} subscriptions={subscriptions} rates={rates} onManage={handleManage} onSettings={handleSettings} currency={activeWorkspace.currency} monthlyBudget={activeWorkspace?.monthlyBudget || 0} onAdd={handleOpenAddModal} />;
-      case 'subscriptions':
-        return <SubscriptionList user={user!} monthlyBudget={activeWorkspace?.monthlyBudget || 0} subscriptions={subscriptions} onSelect={handleManage} currency={activeWorkspace.currency} rates={rates} onSettings={handleSettings} categories={allCategories} onMarkAsUsed={handleMarkAsUsed} onBulkDelete={handleBulkDelete} onBulkMarkUsed={handleBulkMarkUsed} />;
-      case 'calendar':
-        return <CalendarView user={user!} subscriptions={subscriptions} currency={activeWorkspace?.currency || 'USD'} onSettings={handleSettings} rates={rates} />;
-      case 'insights':
-        return <Insights user={user!} subscriptions={subscriptions} rates={rates} currency={activeWorkspace?.currency || 'USD'} onSettings={handleSettings} />;
-      case 'settings':
-        return (
+    return (
+      <div className="flex-1 overflow-y-auto no-scrollbar relative">
+        {currentTab === 'dashboard' && (
+          isBusinessWorkspace
+            ? <BusinessDashboard subscriptions={subscriptions} rates={rates} onManage={handleManage} currency={activeWorkspace.currency} onViewWaste={handleViewWaste} />
+            : <PersonalDashboard
+              user={user!}
+              subscriptions={subscriptions}
+              onManage={(sub) => {
+                setEditingSubscription(sub);
+                setShowAddModal(true);
+              }}
+              onSettings={() => setCurrentTab('settings')}
+              rates={rates}
+              currency={activeWorkspace?.currency || 'USD'}
+              monthlyBudget={activeWorkspace?.monthlyBudget || 0}
+              onAdd={() => setShowAddModal(true)}
+              isPremium={isUserPremium(user!)}
+              lockedIds={lockedIds}
+            />
+        )}
+
+        {currentTab === 'subscriptions' && (
+          <SubscriptionList
+            user={user!}
+            subscriptions={subscriptions}
+            currency={activeWorkspace?.currency || 'USD'}
+            onSelect={(sub) => {
+              setEditingSubscription(sub);
+              setShowAddModal(true);
+            }}
+            onSettings={() => setCurrentTab('settings')}
+            rates={rates}
+            categories={allCategories}
+            onMarkAsUsed={handleMarkAsUsed}
+            onMarkAsPaid={(sub) => setMarkAsPaidModal({ isOpen: true, subscription: sub })}
+            onBulkDelete={handleBulkDelete}
+            onBulkMarkUsed={handleBulkMarkUsed}
+            monthlyBudget={activeWorkspace?.monthlyBudget}
+            isPremium={isUserPremium(user!)}
+            lockedIds={lockedIds}
+            onLockedClick={() => {
+              setConfirmModal({
+                isOpen: true,
+                title: "Subscription Locked 🔒",
+                message: "This subscription exceeds your free plan limit (6 subs). Upgrade to Premium to unlock it!",
+                type: 'info',
+                confirmText: "Get Premium",
+                cancelText: "Cancel",
+                showCancel: true,
+                onConfirm: () => {
+                  setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                  setShowPremiumModal(true);
+                }
+              });
+            }}
+          />
+        )}
+
+        {currentTab === 'calendar' && (
+          <CalendarView user={user!} subscriptions={subscriptions} currency={activeWorkspace?.currency || 'USD'} onSettings={() => setCurrentTab('settings')} rates={rates} />
+        )}
+
+        {currentTab === 'insights' && (
+          <Insights user={user!} subscriptions={subscriptions} rates={rates} currency={activeWorkspace?.currency || 'USD'} onSettings={() => setCurrentTab('settings')} />
+        )}
+
+        {currentTab === 'settings' && (
           <Settings
             user={user!}
             subscriptions={subscriptions}
@@ -1176,6 +1347,7 @@ const MainApp: React.FC = () => {
             }}
             onClose={() => setCurrentTab('dashboard')}
             onUpdateProfile={handleUpdateProfile}
+            onOpenPremiumModal={() => setShowPremiumModal(true)}
             onImport={async (subs) => {
               if (activeWorkspace) {
                 // Strict Check for Import
@@ -1186,7 +1358,7 @@ const MainApp: React.FC = () => {
                     .eq('userId', user.id);
 
                   if (((count || 0) + subs.length) > 6) {
-                    showToast(`Cannot import ${subs.length} subs. Global limit is 6. You have ${count || 0}.`, "error");
+                    showToast(`Cannot import ${subs.length} subs. Free limit of 6 reached.`, "error");
                     setShowPremiumModal(true);
                     return;
                   }
@@ -1202,10 +1374,9 @@ const MainApp: React.FC = () => {
             onSignOut={handleSignOut}
             onConvertAllSubscriptions={handleBulkCurrencyConvert}
           />
-        );
-      default:
-        return null;
-    }
+        )}
+      </div>
+    );
   };
 
   if (initializing) return <div className="flex h-screen items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
@@ -1224,7 +1395,7 @@ const MainApp: React.FC = () => {
   if (showOnboarding) return <Onboarding onComplete={handleOnboardingComplete} />;
 
   return (
-    <div className="bg-white min-h-screen text-gray-800 font-sans max-w-md mx-auto shadow-2xl overflow-hidden relative border-x border-gray-100">
+    <div className="bg-white min-h-screen text-gray-800 font-sans w-full overflow-hidden relative">
       {currentTab === 'dashboard' && user && (
         <div className="bg-gray-50 px-4 pt-4 pb-2 flex justify-between items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -1289,6 +1460,13 @@ const MainApp: React.FC = () => {
         message={confirmModal.message}
         type={confirmModal.type}
         confirmText={confirmModal.confirmText}
+      />
+
+      <MarkAsPaidModal
+        isOpen={markAsPaidModal.isOpen}
+        onClose={() => setMarkAsPaidModal({ isOpen: false, subscription: null })}
+        subscription={markAsPaidModal.subscription}
+        onConfirm={handleMarkAsPaid}
       />
 
       <FeatureTour userId={user?.id} />

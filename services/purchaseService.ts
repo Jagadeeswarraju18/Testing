@@ -53,22 +53,87 @@ export const initializePurchases = async (userId?: string): Promise<boolean> => 
  * Check if user has active Premium entitlement
  * Call this on every app launch!
  */
+// Helper to check family status (Private helper, not exported)
+const checkFamilyPremiumStatus = async (userId: string): Promise<{ isPremium: boolean; expirationDate: string | null }> => {
+    try {
+        const { supabase } = await import('../lib/supabase');
+
+        // 1. Find if user is in a family
+        // We only care if they are a 'member' (owners already have their own status checked)
+        // actually, owners need their own status check anyway.
+        // Let's just find the group they belong to.
+        const { data: member } = await supabase
+            .from('family_members')
+            .select('group:family_groups(owner_id)')
+            .eq('user_id', userId)
+            .single();
+
+        if (member && member.group) {
+            const ownerId = (member.group as any).owner_id;
+
+            // 2. Check Owner's Status
+            // We can't use checkPremiumStatus recursively safely if we loop? 
+            // Owner shouldn't be a member of another group usually. 
+            // Let's allow one level of inheritance.
+            // Check Owner's DB profile first (Fast test)
+            const { data: owner } = await supabase
+                .from('users')
+                .select('isPremium, premiumExpiryDate')
+                .eq('id', ownerId)
+                .single();
+
+            if (owner && (owner.isPremium || (owner.premiumExpiryDate && new Date(owner.premiumExpiryDate) > new Date()))) {
+                log(`RevenueCat: User ${userId} inherits Premium from Family Owner ${ownerId}`);
+                return { isPremium: true, expirationDate: owner.premiumExpiryDate };
+            }
+        }
+    } catch (e) {
+        // limit lookup errors
+        // log('Family check error', e); 
+    }
+    return { isPremium: false, expirationDate: null };
+};
+
 export const checkPremiumStatus = async (): Promise<{ isPremium: boolean; expirationDate: string | null }> => {
     try {
         const platform = Capacitor.getPlatform();
-        if (platform === 'web') {
-            log('RevenueCat: Web platform, returning false for premium');
-            return { isPremium: false, expirationDate: null };
+        let result = { isPremium: false, expirationDate: null };
+
+        // 1. Check Native (RevenueCat)
+        if (platform !== 'web') {
+            try {
+                const { customerInfo } = await Purchases.getCustomerInfo();
+                const entitlement = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID];
+                if (entitlement) {
+                    log('RevenueCat: Premium active via App Store');
+                    return { isPremium: true, expirationDate: entitlement.expirationDate || null };
+                }
+            } catch (e) {
+                // Ignore RC errors if checking other sources
+            }
         }
 
-        const { customerInfo } = await Purchases.getCustomerInfo();
-        const entitlement = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID];
-        const isPremium = entitlement !== undefined;
-        // entitlement.expirationDate is null for lifetime, ISO string otherwise
-        const expirationDate = entitlement?.expirationDate || null;
+        // 2. Check Web/DB (Razorpay or Cross-Platform Sync)
+        const { data: { user } } = await import('../lib/supabase').then(m => m.supabase.auth.getUser());
+        if (user) {
+            // Check User's Personal Profile
+            const { data: profile } = await import('../lib/supabase').then(m => m.supabase.from('users').select('isPremium, premiumExpiryDate').eq('id', user.id).single());
+            if (profile && (profile.isPremium || (profile.premiumExpiryDate && new Date(profile.premiumExpiryDate) > new Date()))) {
+                result = { isPremium: true, expirationDate: profile.premiumExpiryDate };
+            } else {
+                // 3. Check Family Inheritance (Only if not already premium)
+                // DISABLED BY REQUEST: Family members must buy their own subscription.
+                /*
+                const familyStatus = await checkFamilyPremiumStatus(user.id);
+                if (familyStatus.isPremium) {
+                    result = familyStatus;
+                }
+                */
+            }
+        }
 
-        log('RevenueCat: Premium status =', isPremium, 'Expires =', expirationDate);
-        return { isPremium, expirationDate };
+        return result;
+
     } catch (error) {
         console.error('RevenueCat: Failed to check premium status', error);
         return { isPremium: false, expirationDate: null };

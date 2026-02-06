@@ -14,12 +14,20 @@ interface DashboardProps {
     currency: string;
     monthlyBudget: number;
     onAdd?: () => void;
+    isPremium?: boolean;
+    lockedIds?: Set<string>;
 }
 
-const PersonalDashboard: React.FC<DashboardProps> = ({ user, subscriptions, onManage, onSettings, rates, currency, monthlyBudget, onAdd }) => {
+const PersonalDashboard: React.FC<DashboardProps> = ({ user, subscriptions, onManage, onSettings, rates, currency, monthlyBudget, onAdd, isPremium, lockedIds }) => {
+    // Filter out locked subscriptions for ALL dashboard calculations
+    const unlockedSubscriptions = React.useMemo(() => {
+        if (!lockedIds || lockedIds.size === 0) return subscriptions;
+        return subscriptions.filter(sub => !lockedIds.has(sub.id));
+    }, [subscriptions, lockedIds]);
+
     // 1. Calculate Monthly Spend (Amortized) - USER'S SHARE ONLY
     const monthlySpend = React.useMemo(() => {
-        return subscriptions
+        return unlockedSubscriptions
             .filter(s => s.status?.toLowerCase() === 'active')
             .reduce((acc, sub) => {
                 const subCurrency = sub.currency || 'USD';
@@ -44,14 +52,14 @@ const PersonalDashboard: React.FC<DashboardProps> = ({ user, subscriptions, onMa
                     default: return acc;
                 }
             }, 0);
-    }, [subscriptions, rates, currency]);
+    }, [unlockedSubscriptions, rates, currency]);
 
     // 2. Yearly Projection
     const yearlySpend = monthlySpend * 12;
 
     // 3. Upcoming Renewals (Next 30 days)
     const upcomingRenewals = React.useMemo(() => {
-        return subscriptions
+        return unlockedSubscriptions
             .filter(s => s.status?.toLowerCase() === 'active')
             .map(sub => {
                 const nextDate = new Date(sub.renewalDate);
@@ -68,7 +76,7 @@ const PersonalDashboard: React.FC<DashboardProps> = ({ user, subscriptions, onMa
             .filter(s => s.daysLeft >= 0)
             .sort((a, b) => a.daysLeft - b.daysLeft)
             .slice(0, 5);
-    }, [subscriptions]); // Recalculate only when subscriptions change
+    }, [unlockedSubscriptions]); // Recalculate only when subscriptions change
 
     const nextUp = upcomingRenewals[0];
 

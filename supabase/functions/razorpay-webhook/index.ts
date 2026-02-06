@@ -106,6 +106,25 @@ serve(async (req) => {
                     payload: { userId, expiry: expiryDate.toISOString() },
                     status: 'processed'
                 });
+
+                // Insert into Premium History
+                // Guess plan type from amount or ID
+                let planType = 'premium';
+                if (sub.plan_id?.includes('monthly') || payment.amount < 10000) planType = 'monthly'; // Heuristic: < 100 INR usually monthly
+                if (sub.plan_id?.includes('yearly') || payment.amount > 10000) planType = 'yearly';
+
+                await supabaseClient.from('premium_purchases').insert({
+                    user_id: userId,
+                    plan_type: planType,
+                    amount: payment.amount / 100, // Razorpay is in paisa
+                    currency: payment.currency,
+                    purchase_date: new Date(payment.created_at * 1000).toISOString(),
+                    expiry_date: expiryDate.toISOString(),
+                    status: 'active',
+                    provider: 'razorpay',
+                    transaction_reference: payment.id
+                });
+                console.log(`Recorded purchase history for ${userId}: ${payment.id}`);
             }
         } else if (eventType === 'subscription.halted' || eventType === 'subscription.cancelled') {
             // We DO NOT revoke immediately. We check the `current_end`.
@@ -115,6 +134,27 @@ serve(async (req) => {
             const sub = body.payload.subscription.entity;
             const userId = sub.notes?.user_id;
             console.log(`Subscription ${eventType} for user ${userId}. Access continues until expiry.`);
+        } else if (eventType === 'refund.processed') {
+            // INSTANT REVOKE on Refund
+            const payment = body.payload.payment.entity;
+            const userId = payment.notes?.user_id;
+
+            if (userId) {
+                console.log(`Refund processed for user ${userId}. Revoking Premium immediately.`);
+
+                // Revoke access by setting expiry to NOW (or slightly in past)
+                await supabaseClient.from('users').update({
+                    isPremium: false,
+                    premiumExpiryDate: new Date().toISOString() // Expire immediately
+                }).eq('id', userId);
+
+                await supabaseClient.from('payment_events').insert({
+                    provider: 'razorpay',
+                    event_type: 'refund_revoked',
+                    payload: { userId, refundId: body.payload.refund.entity.id },
+                    status: 'processed'
+                });
+            }
         }
 
         return new Response(JSON.stringify({ received: true }), {

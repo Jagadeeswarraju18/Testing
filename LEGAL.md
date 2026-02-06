@@ -32,7 +32,7 @@ To provide our service, we share data with the following trusted third-party pro
 - **Google Play**: Payment processing for Android users.
 
 **6. Contact Us**
-If you have any questions about this Privacy Policy, please contact us at: support@spendyx.app
+If you have any questions about this Privacy Policy, please contact us at: jwrstack@gmail.com
 
 ---
 
@@ -54,4 +54,4 @@ We may terminate or suspend your account immediately, without prior notice or li
 We reserve the right, at our sole discretion, to modify or replace these Terms at any time.
 
 **6. Contact Us**
-If you have any questions about these Terms, please contact us at: support@spendyx.app
+If you have any questions about these Terms, please contact us at: jwrstack@gmail.com

@@ -61,9 +61,19 @@ export const createRazorpaySubscription = async ({
             body: { planType: planId }
         });
 
-        if (error || !orderData || !orderData.id) {
-            console.error('Order creation failed:', error || orderData);
-            throw new Error('Failed to create subscription order. Please try again.');
+        if (error) {
+            console.error('Edge Function Invite Error:', error);
+            throw error;
+        }
+
+        if (orderData?.error) {
+            console.error('Order creation logical error:', orderData.error);
+            throw new Error(orderData.error);
+        }
+
+        if (!orderData || !orderData.id) {
+            console.error('Invalid Order Data:', orderData);
+            throw new Error('Failed to create subscription order (No ID returned).');
         }
 
         console.log('Razorpay Order Created:', orderData);
