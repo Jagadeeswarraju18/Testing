@@ -47,7 +47,7 @@ interface ErrorBoundaryState {
   retryCount: number;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, retryCount: 0 };
@@ -1484,6 +1484,8 @@ const MainApp: React.FC = () => {
   );
 };
 
+
+
 const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
@@ -1497,11 +1499,9 @@ const App: React.FC = () => {
   if (currentPath === '/terms') return <LegalPage type="terms" />;
 
   return (
-    <ErrorBoundary>
-      <WorkspaceProvider>
-        <MainApp />
-      </WorkspaceProvider>
-    </ErrorBoundary>
+    <WorkspaceProvider>
+      <MainApp />
+    </WorkspaceProvider>
   );
 };
 
