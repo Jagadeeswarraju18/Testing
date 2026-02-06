@@ -676,11 +676,11 @@ const MainApp: React.FC = () => {
 
         if (planType === 'monthly') {
           // Match $rc_monthly, product ID containing 'monthly', or packageType MONTHLY
-          return id === '$rc_monthly' || productId.includes('monthly') || pkg.packageType === PACKAGE_TYPE.MONTHLY;
+          return id === '$rc_monthly' || productId.includes('monthly') || pkg.packageType === RC_PACKAGE_TYPE_MONTHLY;
         }
         if (planType === 'yearly') {
           // Match $rc_annual, product ID containing 'yearly' or 'annual', or packageType ANNUAL
-          return id === '$rc_annual' || productId.includes('yearly') || productId.includes('annual') || pkg.packageType === PACKAGE_TYPE.ANNUAL;
+          return id === '$rc_annual' || productId.includes('yearly') || productId.includes('annual') || pkg.packageType === RC_PACKAGE_TYPE_ANNUAL;
         }
         return false;
       });
