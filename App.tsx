@@ -30,6 +30,7 @@ import { supabaseRetry } from './utils/retryUtils';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { FeatureTour } from './components/FeatureTour';
+import { Analytics } from '@vercel/analytics/react';
 
 // Simple Error Boundary
 interface ErrorBoundaryProps {
@@ -1318,6 +1319,7 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <WorkspaceProvider>
         <MainApp />
+        <Analytics />
       </WorkspaceProvider>
     </ErrorBoundary>
   );
