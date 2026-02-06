@@ -1,5 +1,4 @@
-import { Purchases, LOG_LEVEL, PurchasesPackage, CustomerInfo } from '@revenuecat/purchases-capacitor';
-import { RevenueCatUI } from '@revenuecat/purchases-capacitor-ui';
+import type { PurchasesPackage, CustomerInfo } from '@revenuecat/purchases-capacitor';
 import { Capacitor } from '@capacitor/core';
 
 // RevenueCat API Keys - Prioritize user provided key
@@ -32,6 +31,9 @@ export const initializePurchases = async (userId?: string): Promise<boolean> => 
             return false;
         }
 
+        // Dynamically import Native SDK
+        const { Purchases, LOG_LEVEL } = await import('@revenuecat/purchases-capacitor');
+
         // Only enable debug logging in development
         await Purchases.setLogLevel({ level: isDev ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR });
 
@@ -53,47 +55,6 @@ export const initializePurchases = async (userId?: string): Promise<boolean> => 
  * Check if user has active Premium entitlement
  * Call this on every app launch!
  */
-// Helper to check family status (Private helper, not exported)
-const checkFamilyPremiumStatus = async (userId: string): Promise<{ isPremium: boolean; expirationDate: string | null }> => {
-    try {
-        const { supabase } = await import('../lib/supabase');
-
-        // 1. Find if user is in a family
-        // We only care if they are a 'member' (owners already have their own status checked)
-        // actually, owners need their own status check anyway.
-        // Let's just find the group they belong to.
-        const { data: member } = await supabase
-            .from('family_members')
-            .select('group:family_groups(owner_id)')
-            .eq('user_id', userId)
-            .single();
-
-        if (member && member.group) {
-            const ownerId = (member.group as any).owner_id;
-
-            // 2. Check Owner's Status
-            // We can't use checkPremiumStatus recursively safely if we loop? 
-            // Owner shouldn't be a member of another group usually. 
-            // Let's allow one level of inheritance.
-            // Check Owner's DB profile first (Fast test)
-            const { data: owner } = await supabase
-                .from('users')
-                .select('isPremium, premiumExpiryDate')
-                .eq('id', ownerId)
-                .single();
-
-            if (owner && (owner.isPremium || (owner.premiumExpiryDate && new Date(owner.premiumExpiryDate) > new Date()))) {
-                log(`RevenueCat: User ${userId} inherits Premium from Family Owner ${ownerId}`);
-                return { isPremium: true, expirationDate: owner.premiumExpiryDate };
-            }
-        }
-    } catch (e) {
-        // limit lookup errors
-        // log('Family check error', e); 
-    }
-    return { isPremium: false, expirationDate: null };
-};
-
 export const checkPremiumStatus = async (): Promise<{ isPremium: boolean; expirationDate: string | null }> => {
     try {
         const platform = Capacitor.getPlatform();
@@ -102,6 +63,7 @@ export const checkPremiumStatus = async (): Promise<{ isPremium: boolean; expira
         // 1. Check Native (RevenueCat)
         if (platform !== 'web') {
             try {
+                const { Purchases } = await import('@revenuecat/purchases-capacitor');
                 const { customerInfo } = await Purchases.getCustomerInfo();
                 const entitlement = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID];
                 if (entitlement) {
@@ -120,15 +82,6 @@ export const checkPremiumStatus = async (): Promise<{ isPremium: boolean; expira
             const { data: profile } = await import('../lib/supabase').then(m => m.supabase.from('users').select('isPremium, premiumExpiryDate').eq('id', user.id).single());
             if (profile && (profile.isPremium || (profile.premiumExpiryDate && new Date(profile.premiumExpiryDate) > new Date()))) {
                 result = { isPremium: true, expirationDate: profile.premiumExpiryDate };
-            } else {
-                // 3. Check Family Inheritance (Only if not already premium)
-                // DISABLED BY REQUEST: Family members must buy their own subscription.
-                /*
-                const familyStatus = await checkFamilyPremiumStatus(user.id);
-                if (familyStatus.isPremium) {
-                    result = familyStatus;
-                }
-                */
             }
         }
 
@@ -150,6 +103,7 @@ export const getOfferings = async (): Promise<PurchasesPackage[]> => {
             return [];
         }
 
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
         const offerings = await Purchases.getOfferings();
 
         if (offerings?.current && offerings.current.availablePackages.length > 0) {
@@ -168,6 +122,7 @@ export const getOfferings = async (): Promise<PurchasesPackage[]> => {
  */
 export const purchasePackage = async (pkg: PurchasesPackage): Promise<{ success: boolean; customerInfo?: CustomerInfo }> => {
     try {
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
         const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
 
         const isPremium = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
@@ -195,6 +150,7 @@ export const restorePurchases = async (): Promise<boolean> => {
             return false;
         }
 
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
         const { customerInfo } = await Purchases.restorePurchases();
         const isPremium = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
 
@@ -218,6 +174,9 @@ export const presentPaywall = async (): Promise<boolean> => {
             alert("Purchases are not available in web browser. Please use the Android app.");
             return false;
         }
+
+        // Dynamic Import for UI
+        const { RevenueCatUI } = await import('@revenuecat/purchases-capacitor-ui');
 
         console.log('[RevenueCat] Presenting paywall...');
         const result = await RevenueCatUI.presentPaywall();
@@ -245,6 +204,8 @@ export const presentCustomerCenter = async (): Promise<void> => {
             console.warn("Customer Center not available on web");
             return;
         }
+
+        const { RevenueCatUI } = await import('@revenuecat/purchases-capacitor-ui');
         await RevenueCatUI.presentCustomerCenter();
     } catch (error) {
         console.error("Error presenting Customer Center:", error);
@@ -264,6 +225,8 @@ export const addCustomerInfoUpdateListener = async (
     }
 
     try {
+        const { Purchases } = await import('@revenuecat/purchases-capacitor');
+
         const listener: any = await Purchases.addCustomerInfoUpdateListener((info: CustomerInfo) => {
             const entitlement = info.entitlements.active[PREMIUM_ENTITLEMENT_ID];
             const isPremium = entitlement !== undefined;
