@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { Component, useState, useEffect, useMemo, useCallback } from 'react';
+import { Purchases, PACKAGE_TYPE } from '@revenuecat/purchases-capacitor';
 import Navigation from './components/Navigation';
 import PersonalDashboard from './components/PersonalDashboard';
 import BusinessDashboard from './components/BusinessDashboard';
@@ -43,7 +44,7 @@ interface ErrorBoundaryState {
   retryCount: number;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   state: ErrorBoundaryState = { hasError: false, error: null, retryCount: 0 };
 
   static getDerivedStateFromError(error: Error) {
@@ -527,7 +528,7 @@ const MainApp: React.FC = () => {
       supabase
         .from('subscriptions')
         .select('*')
-        .eq('workspaceId', workspaceId)
+        .eq('workspaceId', workspaceId) as any
     );
 
     if (error) {
@@ -535,7 +536,7 @@ const MainApp: React.FC = () => {
     } else {
       // Auto-advance billing dates for auto_renew subscriptions
       const subsToUpdate: Subscription[] = [];
-      const processedSubs = (data || []).map((sub: Subscription) => {
+      const processedSubs = ((data as Subscription[]) || []).map((sub: Subscription) => {
         // Check if this sub needs auto-advance
         if (shouldAutoAdvance(sub.renewalDate, sub.paymentMode, sub.lastAutoRenewed, sub.billingCycle)) {
           const newRenewalDate = calculateNextRenewal(sub.renewalDate, sub.billingCycle);
@@ -674,12 +675,12 @@ const MainApp: React.FC = () => {
         console.log('[Purchase] Checking package:', id, 'productId:', productId, 'type:', pkg.packageType);
 
         if (planType === 'monthly') {
-          // Match $rc_monthly, product ID containing 'monthly', or packageType 7
-          return id === '$rc_monthly' || productId.includes('monthly') || pkg.packageType === 7;
+          // Match $rc_monthly, product ID containing 'monthly', or packageType MONTHLY
+          return id === '$rc_monthly' || productId.includes('monthly') || pkg.packageType === PACKAGE_TYPE.MONTHLY;
         }
         if (planType === 'yearly') {
-          // Match $rc_annual, product ID containing 'yearly' or 'annual', or packageType 3
-          return id === '$rc_annual' || productId.includes('yearly') || productId.includes('annual') || pkg.packageType === 3;
+          // Match $rc_annual, product ID containing 'yearly' or 'annual', or packageType ANNUAL
+          return id === '$rc_annual' || productId.includes('yearly') || productId.includes('annual') || pkg.packageType === PACKAGE_TYPE.ANNUAL;
         }
         return false;
       });

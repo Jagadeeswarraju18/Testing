@@ -130,7 +130,7 @@ const ImportModal: React.FC<ImportModalProps> = ({ isOpen, onClose, onImport, cu
                     else if (v.includes('week')) sub.billingCycle = BillingCycle.Weekly;
                     else sub.billingCycle = BillingCycle.Monthly;
                 } else {
-                    (sub as any)[field] = value;
+                    (sub as any)[field as string] = value;
                 }
             });
 

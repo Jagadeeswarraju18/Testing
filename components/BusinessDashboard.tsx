@@ -55,7 +55,7 @@ const BusinessDashboard: React.FC<DashboardProps> = ({ subscriptions, rates, onM
     // Bar Chart Data (Sorted)
     const chartData = Object.entries(metrics.departments)
         .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => (Number(b.value) - Number(a.value)));
 
     const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981', '#3b82f6'];
 

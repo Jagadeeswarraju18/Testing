@@ -135,6 +135,7 @@ export async function syncWidgetData(data: WidgetData): Promise<boolean> {
 
         // Try to import widget bridge (will fail if not installed)
         try {
+            // @ts-ignore
             const { WidgetBridge } = await import('capacitor-widget-bridge');
 
             // Store data for widget to read
