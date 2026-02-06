@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, '.'),
       }
     },
-    base: './',
+    base: '/',
     build: {
       target: 'chrome60', // Fix for white screen on older/some Android WebViews
       chunkSizeWarningLimit: 1500,
