@@ -1,5 +1,8 @@
 import React, { Component, useState, useEffect, useMemo, useCallback } from 'react';
-import { Purchases, PACKAGE_TYPE } from '@revenuecat/purchases-capacitor';
+// Local RevenueCat constants (mirroring @revenuecat/purchases-capacitor PACKAGE_TYPE)
+const RC_PACKAGE_TYPE_ANNUAL = 3;
+const RC_PACKAGE_TYPE_MONTHLY = 7;
+
 import Navigation from './components/Navigation';
 import PersonalDashboard from './components/PersonalDashboard';
 import BusinessDashboard from './components/BusinessDashboard';
@@ -44,8 +47,11 @@ interface ErrorBoundaryState {
   retryCount: number;
 }
 
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null, retryCount: 0 };
+class ErrorBoundary extends (React.Component as any)<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null, retryCount: 0 };
+  }
 
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
@@ -676,11 +682,11 @@ const MainApp: React.FC = () => {
 
         if (planType === 'monthly') {
           // Match $rc_monthly, product ID containing 'monthly', or packageType MONTHLY
-          return id === '$rc_monthly' || productId.includes('monthly') || pkg.packageType === RC_PACKAGE_TYPE_MONTHLY;
+          return id === '$rc_monthly' || productId.includes('monthly') || (pkg.packageType as any) === RC_PACKAGE_TYPE_MONTHLY;
         }
         if (planType === 'yearly') {
           // Match $rc_annual, product ID containing 'yearly' or 'annual', or packageType ANNUAL
-          return id === '$rc_annual' || productId.includes('yearly') || productId.includes('annual') || pkg.packageType === RC_PACKAGE_TYPE_ANNUAL;
+          return id === '$rc_annual' || productId.includes('yearly') || productId.includes('annual') || (pkg.packageType as any) === RC_PACKAGE_TYPE_ANNUAL;
         }
         return false;
       });
