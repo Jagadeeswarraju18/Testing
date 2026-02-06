@@ -37,11 +37,11 @@ import { Capacitor } from '@capacitor/core';
 import { FeatureTour } from './components/FeatureTour';
 
 // Simple Error Boundary
-interface ErrorBoundaryProps {
+export interface ErrorBoundaryProps {
   children: React.ReactNode;
 }
 
-interface ErrorBoundaryState {
+export interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
   retryCount: number;
@@ -62,7 +62,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   handleRetry = () => {
-    this.setState(prev => ({ hasError: false, error: null, retryCount: prev.retryCount + 1 }));
+    this.setState(prev => ({ hasError: false, error: null, retryCount: (prev as any).retryCount + 1 }));
   };
 
   render() {
