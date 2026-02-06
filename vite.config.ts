@@ -21,7 +21,8 @@ export default defineConfig(({ mode }) => {
     },
     base: '/',
     build: {
-      target: 'chrome60', // Fix for white screen on older/some Android WebViews
+      target: 'chrome60',
+      assetsDir: '.',
       chunkSizeWarningLimit: 1500,
     }
   };
