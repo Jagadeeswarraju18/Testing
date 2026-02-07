@@ -1,4 +1,5 @@
 import React, { Component, useState, useEffect, useMemo, useCallback } from 'react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 // Local RevenueCat constants (mirroring @revenuecat/purchases-capacitor PACKAGE_TYPE)
 const RC_PACKAGE_TYPE_ANNUAL = 3;
 const RC_PACKAGE_TYPE_MONTHLY = 7;
@@ -1501,6 +1502,7 @@ const App: React.FC = () => {
   return (
     <WorkspaceProvider>
       <MainApp />
+      <SpeedInsights />
     </WorkspaceProvider>
   );
 };
