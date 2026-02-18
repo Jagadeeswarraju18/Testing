@@ -4,7 +4,7 @@ android {
     namespace = "com.jwr.spendyx"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.getspendyx.app"
+        applicationId "com.jwr.spendyx"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 13

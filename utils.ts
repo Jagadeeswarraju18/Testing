@@ -158,6 +158,10 @@ export const shouldAutoAdvance = (
   if (renewal > now) return false;
 
   // Check if we already auto-renewed recently (within this cycle)
+  // DEPRECATED CHECK: This prevents "catch-up" logic if we are multiple cycles behind,
+  // or if the last renewal timestamp was set recently but the date is still in the past.
+  // We rely on (renewal > now) check above to prevent double-advancement.
+  /*
   if (lastAutoRenewed) {
     const lastRenewed = new Date(lastAutoRenewed);
 
@@ -177,6 +181,7 @@ export const shouldAutoAdvance = (
     // If we renewed recently, don't advance again
     if (daysSinceRenew < minDays) return false;
   }
+  */
 
   return true;
 };

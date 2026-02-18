@@ -25,7 +25,7 @@ interface SettingsProps {
     onSignOut: () => void;
     onChangeCurrency: (currency: string, oldCurrency: string, currentBudget: number, timezone: string) => void;
     onImport?: (data: any[]) => void;
-    onUpdateProfile?: (name: string, email: string) => void;
+    onUpdateProfile?: (name: string, email: string, avatar?: string) => void;
     onUpdateBudget: (budget: number) => void;
     rates?: Record<string, number>;
     categories: { id: string, name: string, icon: string }[];
@@ -323,7 +323,8 @@ const Settings: React.FC<SettingsProps> = ({
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                if (onUpdateProfile) onUpdateProfile(user.name, user.email);
+                const base64data = reader.result as string;
+                if (onUpdateProfile) onUpdateProfile(user.name, user.email, base64data);
             };
             reader.readAsDataURL(file);
         }

@@ -211,18 +211,24 @@ const Auth: React.FC<AuthProps> = ({ onComplete }) => {
                     onClick={async () => {
                         try {
                             setLoading(true);
-                            await supabase.auth.signInWithOAuth({
+                            // Explicitly define redirect URL to debug
+                            const redirectUrl = Capacitor.isNativePlatform() || Capacitor.getPlatform() === 'android'
+                                ? 'com.jwr.spendyx://login-callback'
+                                : window.location.origin;
+
+                            const { data, error } = await supabase.auth.signInWithOAuth({
                                 provider: 'google',
                                 options: {
-                                    redirectTo: Capacitor.isNativePlatform()
-                                        ? 'com.jwr.spendyx://login-callback'
-                                        : window.location.origin,
-                                    skipBrowserRedirect: false // Ensure browser opens for standard OAuth
+                                    redirectTo: redirectUrl,
+                                    skipBrowserRedirect: false
                                 }
                             });
+
+                            if (error) throw error;
                         } catch (err: any) {
                             setError(err.message);
                             setLoading(false);
+                            alert(`Login Error: ${err.message}`);
                         }
                     }}
                     disabled={loading}
@@ -261,9 +267,10 @@ const Auth: React.FC<AuthProps> = ({ onComplete }) => {
                         </button>
                     </p>
                 </div>
-            </motion.div >
-        </div >
+            </motion.div>
+        </div>
     );
+
 };
 
 export default Auth;

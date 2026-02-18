@@ -1155,22 +1155,28 @@ const MainApp: React.FC = () => {
     }
   }, [subscriptions.length]);
 
-  const handleUpdateProfile = async (name: string, email: string) => {
+  const handleUpdateProfile = async (name: string, email: string, avatar?: string) => {
     if (!user) return;
 
     try {
-      // 1. Update Supabase Auth Metadata (Source of Truth for name)
+      // 1. Update Supabase Auth Metadata (Source of Truth for name and avatar)
+      const updates: any = { name: name };
+      if (avatar) updates.avatar = avatar;
+
       const { error: authError } = await supabase.auth.updateUser({
-        data: { name: name }
+        data: updates
       });
 
       if (authError) throw authError;
 
       // 2. Update Users Table (Sync)
-      await supabase.from('users').update({ name }).eq('id', user.id);
+      const dbUpdates: any = { name };
+      if (avatar) dbUpdates.avatar = avatar;
+
+      await supabase.from('users').update(dbUpdates).eq('id', user.id);
 
       // 3. Update Local State
-      setUser(prev => prev ? ({ ...prev, name: name }) : null);
+      setUser(prev => prev ? ({ ...prev, name: name, avatar: avatar || prev.avatar }) : null);
 
       showToast('Profile updated!', 'success');
 
@@ -1397,6 +1403,19 @@ const MainApp: React.FC = () => {
   }
 
   if (showOnboarding) return <Onboarding onComplete={handleOnboardingComplete} />;
+
+  // Prevent main UI (with walkthrough) from showing while workspaces are still loading
+  // This avoids the flicker where the dashboard shell shows for a second before onboarding
+  if (workspacesLoading) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-50 z-[100]">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 bg-indigo-200 rounded-full mb-4"></div>
+          <div className="h-4 w-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen text-gray-800 font-sans w-full overflow-hidden relative">
