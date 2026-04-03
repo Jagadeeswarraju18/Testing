@@ -48,19 +48,24 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         if (error) {
             console.error('Error fetching workspaces:', error);
+            setWorkspaces([]);
         } else {
             setWorkspaces(data || []);
+        }
 
-            // Logic to set active workspace if null or invalid
-            const storedId = localStorage.getItem('subtrack_active_workspace');
-            const isValidStored = storedId && data?.find(w => w.id === storedId);
+        const allWorkspaces = data || [];
 
-            if (isValidStored) {
-                setActiveWorkspaceId(storedId);
-            } else if (data && data.length > 0) {
-                // Default to first if no valid stored ID
-                setActiveWorkspaceId(data[0].id);
-            }
+        // Logic to set active workspace if null or invalid
+        const storedId = localStorage.getItem('subtrack_active_workspace');
+        const isValidStored = storedId && allWorkspaces.find(w => w.id === storedId);
+
+        if (isValidStored) {
+            setActiveWorkspaceId(storedId);
+        } else if (allWorkspaces.length > 0) {
+            // Default to first if no valid stored ID
+            setActiveWorkspaceId(allWorkspaces[0].id);
+        } else {
+            setActiveWorkspaceId(null);
         }
         setLoading(false);
     };
@@ -74,11 +79,14 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 setWorkspaces([]);
                 setActiveWorkspaceId(null);
                 localStorage.removeItem('subtrack_active_workspace');
+                localStorage.removeItem('subtrack_offline_workspaces');
             }
         });
 
-        fetchWorkspaces();
-
+        // The cleanup function for useEffect should return a function, or nothing.
+        // Returning null directly is not a valid cleanup function.
+        // If the intent was to prevent the unsubscribe, the return statement could be removed.
+        // However, keeping the unsubscribe is generally good practice for event listeners.
         return () => {
             subscription.unsubscribe();
         };
@@ -89,28 +97,27 @@ export const WorkspaceProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         , [workspaces, activeWorkspaceId]);
 
     const createWorkspace = async (name: string, type: WorkspaceType, user: User) => {
+        console.log(`[WorkspaceContext] createWorkspace called: ${name} (${type}) for user ${user.id}`);
+
+        const payload = {
+            name,
+            type,
+            ownerId: user.id
+        };
+        console.log('[WorkspaceContext] Payload:', payload);
+
         const { data, error } = await supabase
             .from('workspaces')
-            .insert([{
-                name,
-                type,
-                ownerId: user.id,
-                currency: 'USD',
-                isDefault: type === 'personal' && workspaces.length === 0,
-                createdAt: new Date().toISOString() // Ensure matches DB if needed, but DB defaults usually handle this. 
-                // However, we used camelCase in SQL, so we must quote if we used raw SQL, but supabase js client handles mapping if configured?
-                // Wait, our SQL used quoted identifiers: "ownerId". Supabase JS client requires exact column matching.
-                // If we defined columns as "ownerId", we must send ownerId.
-            }])
+            .insert([payload])
             .select()
             .single();
 
         if (error) {
-            console.error('Error creating workspace:', error);
-            alert(error.message);
-            return null;
+            console.error('[WorkspaceContext] Error creating workspace:', error);
+            throw error; // Don't create phantom workspaces - fail honestly
         }
 
+        console.log(`[WorkspaceContext] Workspace created successfully: ${data.id}`);
         const newWorkspace = data as Workspace;
         setWorkspaces(prev => [...prev, newWorkspace]);
         setActiveWorkspaceId(newWorkspace.id);

@@ -112,12 +112,20 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rates }) => {
         nextStep();
     };
 
-    const finish = () => {
-        onComplete({
-            currency,
-            budget: parseInt(budget) || 1000,
-            selectedIds
-        });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const finish = async () => {
+        setIsSubmitting(true);
+        try {
+            await onComplete({
+                currency,
+                budget: parseInt(budget) || 1000,
+                selectedIds
+            });
+        } catch (error) {
+            console.error("Onboarding completion failed:", error);
+            setIsSubmitting(false);
+        }
     };
 
     // Step Rendering
@@ -467,9 +475,22 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rates }) => {
                 </div>
             ),
             bottom: (
-                <button onClick={finish} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 group">
-                    Go to Dashboard
-                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                <button
+                    onClick={finish}
+                    disabled={isSubmitting}
+                    className="w-full bg-gray-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl hover:scale-[1.02] transition-all flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                    {isSubmitting ? (
+                        <>
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            <span>Setting up...</span>
+                        </>
+                    ) : (
+                        <>
+                            Go to Dashboard
+                            <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                        </>
+                    )}
                 </button>
             )
         }

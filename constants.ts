@@ -1,5 +1,7 @@
 import { ProviderSeed } from './types';
 
+export const FREE_SUBSCRIPTION_LIMIT = 6;
+
 export const CATEGORIES = [
   { id: 'entertainment', name: 'Entertainment', icon: 'Film' },
   { id: 'music', name: 'Music', icon: 'Music' },

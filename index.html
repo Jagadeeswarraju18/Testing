@@ -5,9 +5,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Spendyx</title>
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="shortcut icon" href="/favicon.png" />
   <script>
     window.onerror = function (message, source, lineno, colno, error) {
-      alert("Error: " + message + "\nSource: " + source + "\nLine: " + lineno);
+      console.error("[App Error]", message, source, lineno);
+      return true; // Prevent default browser error handling
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Shield, Star, Zap, ChevronRight, Play, X, Download, Smartphone, Bell, PieChart, Layers, Search, Calendar, Mail, Loader2, TrendingDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Shield, Star, Zap, ChevronRight, Play, X, Download, Smartphone, Bell, PieChart, Layers, Search, Calendar, Mail, Loader2, TrendingDown, Sparkles, LayoutDashboard, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
 import { Link } from './Link'; // Assuming simple link component or use href
 import { supabase } from '../lib/supabase';
 
@@ -8,6 +8,12 @@ interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
+
+const XBrandIcon: React.FC<{ className?: string }> = ({ className }) => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className={className} fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25h6.827l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+    </svg>
+);
 
 const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) => {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -122,23 +128,40 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 overflow-x-hidden">
             {/* Header */}
-            <header className="absolute top-0 left-0 right-0 z-50 pt-6 px-6">
-                <div className="max-w-[1400px] mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img src="/Spendyx.png" alt="Spendyx Logo" className="w-12 h-12 md:w-14 md:h-14 object-contain" />
-                        <span className="font-bold text-2xl md:text-3xl tracking-tight text-gray-900">Spendyx</span>
+            <header className="sticky top-0 z-50 px-4 md:px-6 pt-5">
+                <div className="max-w-[1280px] mx-auto">
+                    <div className="h-[76px] flex items-center justify-between gap-4 rounded-full border border-gray-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-5 md:px-6">
+                        <div className="flex items-center gap-3 shrink-0">
+                            <img src="/Spendyx.png" alt="Spendyx Logo" className="w-10 h-10 md:w-11 md:h-11 object-contain" />
+                            <span className="font-black text-2xl md:text-3xl tracking-tight leading-none text-gray-900">Spendyx</span>
+                        </div>
+
+                        <nav className="hidden md:flex items-center gap-1 p-1.5 rounded-full bg-gray-50 border border-gray-100 text-[14px] font-semibold text-gray-600">
+                            <a href="#features" className="px-5 py-2 rounded-full hover:bg-white hover:text-gray-900 hover:shadow-sm transition-all border border-transparent hover:border-gray-100">Features</a>
+                            <a href="#how-it-works" className="px-5 py-2 rounded-full hover:bg-white hover:text-gray-900 hover:shadow-sm transition-all border border-transparent hover:border-gray-100">How it works</a>
+                            <a href="#comparison" className="px-5 py-2 rounded-full hover:bg-white hover:text-gray-900 hover:shadow-sm transition-all border border-transparent hover:border-gray-100">Why Spendyx</a>
+                            <a href="#contact" className="px-5 py-2 rounded-full hover:bg-white hover:text-gray-900 hover:shadow-sm transition-all border border-transparent hover:border-gray-100">Contact</a>
+                        </nav>
+
+                        <button
+                            onClick={onGetStarted}
+                            className="px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-full hover:bg-gray-800 transition-all shadow-md"
+                        >
+                            Sign In
+                        </button>
                     </div>
-                    <button
-                        onClick={onGetStarted}
-                        className="px-5 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-full hover:bg-gray-800 transition-all shadow-lg shadow-gray-200 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-                    >
-                        Sign In
-                    </button>
+
+                    <nav className="md:hidden mt-3 p-1.5 rounded-full border border-gray-200 bg-white shadow-lg flex items-center gap-2 overflow-x-auto no-scrollbar text-sm font-medium text-gray-600">
+                        <a href="#features" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Features</a>
+                        <a href="#how-it-works" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">How it works</a>
+                        <a href="#comparison" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Why Spendyx</a>
+                        <a href="#contact" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Contact</a>
+                    </nav>
                 </div>
             </header>
 
             {/* Hero Section */}
-            <section className="relative pt-20 pb-8 lg:pt-20 lg:pb-32 overflow-hidden">
+            <section className="relative pt-10 pb-8 lg:pt-12 lg:pb-32 overflow-hidden">
                 <div className="max-w-[1400px] mx-auto px-6 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-12 items-center">
 
                     {/* App Showcase Animation - 3D Rotating Carousel */}
@@ -440,7 +463,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
             </section >
 
             {/* How It Works Section */}
-            < section className="py-16 md:py-24 bg-white relative" >
+            < section id="how-it-works" className="py-16 md:py-24 bg-white relative" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="text-center max-w-3xl mx-auto mb-12 md:mb-16">
                         <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-6">How it works</h2>
@@ -474,7 +497,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
             </section >
 
             {/* Comparison Section */}
-            < section className="py-16 md:py-24 bg-gray-50" >
+            < section id="comparison" className="py-16 md:py-24 bg-gray-50" >
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
                         <div className="order-2 lg:order-1">
@@ -616,22 +639,102 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
             </section >
 
             {/* Footer */}
-            < footer className="bg-gray-900 text-white py-12 border-t border-gray-800" >
-                <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="text-center md:text-left">
-                        <div className="flex items-center gap-3 mb-2 justify-center md:justify-start">
-                            <img src="/Spendyx.png" alt="Spendyx Logo" className="w-8 h-8 object-contain" />
-                            <span className="font-bold text-lg">Spendyx</span>
+            <footer id="contact" className="relative overflow-hidden bg-[#060f1f] text-white border-t border-white/10">
+                <div className="pointer-events-none absolute -top-24 right-0 w-80 h-80 rounded-full bg-cyan-400/10 blur-3xl"></div>
+                <div className="pointer-events-none absolute -bottom-24 left-0 w-80 h-80 rounded-full bg-indigo-500/10 blur-3xl"></div>
+
+                <div className="relative max-w-7xl mx-auto px-6 py-12 md:py-16">
+                    <div className="rounded-3xl border border-white/15 bg-white/[0.04] backdrop-blur-sm p-6 md:p-8">
+                        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                            <div>
+                                <div className="inline-flex items-center gap-3 mb-3">
+                                    <img src="/Spendyx.png" alt="Spendyx Logo" className="w-10 h-10 object-contain" />
+                                    <span className="text-2xl font-black tracking-tight">Spendyx</span>
+                                </div>
+                                <p className="text-slate-300 text-sm md:text-base max-w-2xl leading-relaxed">
+                                    Stop paying for things you forgot. Spendyx keeps your renewals visible, your spending clear, and your choices intentional.
+                                </p>
+                            </div>
+
+                            <button
+                                onClick={onGetStarted}
+                                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-cyan-400 text-slate-950 font-black text-sm hover:bg-cyan-300 transition-colors"
+                            >
+                                Start Free
+                                <ArrowRight size={16} />
+                            </button>
                         </div>
-                        <p className="text-gray-400 text-sm">© 2026 Spendyx Inc. All rights reserved.</p>
+
+                        <div className="mt-8 pt-6 border-t border-white/10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3 font-bold">Product</p>
+                                <div className="flex flex-col gap-2 text-sm text-slate-200">
+                                    <a href="#features" className="group inline-flex items-center gap-2 hover:text-white transition-colors">
+                                        <span className="w-6 h-6 rounded-md bg-white/10 border border-white/10 inline-flex items-center justify-center">
+                                            <Sparkles size={13} />
+                                        </span>
+                                        <span>Features</span>
+                                    </a>
+                                    <button onClick={onGetStarted} className="group inline-flex items-center gap-2 text-left hover:text-white transition-colors">
+                                        <span className="w-6 h-6 rounded-md bg-white/10 border border-white/10 inline-flex items-center justify-center">
+                                            <LayoutDashboard size={13} />
+                                        </span>
+                                        <span>Dashboard</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3 font-bold">Legal</p>
+                                <div className="flex flex-col gap-2 text-sm text-slate-200">
+                                    <Link href="/privacy-policy" className="group inline-flex items-center gap-2 hover:text-white transition-colors">
+                                        <span className="w-6 h-6 rounded-md bg-white/10 border border-white/10 inline-flex items-center justify-center">
+                                            <ShieldCheck size={13} />
+                                        </span>
+                                        <span>Privacy Policy</span>
+                                    </Link>
+                                    <Link href="/terms" className="group inline-flex items-center gap-2 hover:text-white transition-colors">
+                                        <span className="w-6 h-6 rounded-md bg-white/10 border border-white/10 inline-flex items-center justify-center">
+                                            <FileText size={13} />
+                                        </span>
+                                        <span>Terms of Service</span>
+                                    </Link>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-xs uppercase tracking-[0.2em] text-slate-400 mb-3 font-bold">Contact</p>
+                                <div className="flex flex-col gap-2 text-sm text-slate-200">
+                                    <a href="mailto:jwrstack@gmail.com" className="group inline-flex items-center gap-2 hover:text-white transition-colors">
+                                        <span className="w-6 h-6 rounded-md bg-white/10 border border-white/10 inline-flex items-center justify-center">
+                                            <Mail size={13} />
+                                        </span>
+                                        <span>jwrstack@gmail.com</span>
+                                    </a>
+                                    <a
+                                        href="https://x.com/jagadeeswarrrr"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group inline-flex items-center gap-2 hover:text-white transition-colors"
+                                    >
+                                        <span className="w-6 h-6 rounded-md bg-white/10 border border-white/10 inline-flex items-center justify-center">
+                                            <XBrandIcon className="w-[13px] h-[13px]" />
+                                        </span>
+                                        <span>@jagadeeswarrrr</span>
+                                        <ExternalLink size={12} className="opacity-70 group-hover:opacity-100" />
+                                    </a>
+                                    <span className="text-slate-400">For issues and support, email or message on X.</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex gap-8 text-sm text-gray-400">
-                        <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-                        <button onClick={onGetStarted} className="hover:text-white transition-colors">Sign In</button>
+
+                    <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-slate-400">
+                        <p>© 2026 Spendyx Inc. All rights reserved.</p>
+                        <p>Built for people who want fewer subscriptions, not more surprises.</p>
                     </div>
                 </div>
-            </footer >
+            </footer>
 
             {/* PWA Install Modal */}
             <AnimatePresence>

@@ -29,6 +29,7 @@ export interface Workspace {
   monthlyBudget?: number;
   // Personal workspaces cannot be deleted
   isDefault?: boolean;
+  createdAt?: string; // ISO 
 }
 
 export interface WorkspaceMember {

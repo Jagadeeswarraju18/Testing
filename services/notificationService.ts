@@ -107,7 +107,16 @@ export const saveFCMToken = async (token: string) => {
  * To re-enable local notifications as fallback, remove the early return below.
  */
 export const scheduleSubscriptionReminders = async (subscriptions: Subscription[]) => {
-    // Local notifications act as a fallback and instant feedback mechanism
+    // Local notifications act as a fallback.
+    // However, since we have Server-Side Push Notifications (via Cron), we should disable local scheduling
+    // on native platforms to prevent duplicates.
+    if (isNative) {
+        console.log('[Notifications] Skipping local scheduling (relying on Server-Side Push)');
+        // Ensure any existing local reminders are cleared so they don't fire
+        await cancelAllNotifications();
+        return;
+    }
+
     // We clear existing ones to avoid duplicates before rescheduling
     console.log('[Notifications] Scheduling local notifications...');
 

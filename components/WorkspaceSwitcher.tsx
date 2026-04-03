@@ -26,7 +26,7 @@ const WorkspaceSwitcher: React.FC = () => {
         );
     }
 
-    const handleCreateBusiness = () => {
+    const handleCreateBusiness = async () => {
         if (!currentUser) {
             return;
         }
@@ -38,10 +38,18 @@ const WorkspaceSwitcher: React.FC = () => {
                 email: currentUser.email || '',
                 defaultCurrency: 'USD'
             };
-            createWorkspace(newWorkspaceName.trim(), 'business', userObj);
-            setNewWorkspaceName('');
-            setShowCreateModal(false);
-            setIsOpen(false);
+            try {
+                await createWorkspace(newWorkspaceName.trim(), 'business', userObj);
+                setNewWorkspaceName('');
+                setShowCreateModal(false);
+                setIsOpen(false);
+            } catch (error) {
+                console.error("Failed to create business workspace:", error);
+                // Ideally show toast here, but we don't have showToast in props/context here?
+                // For now, we rely on the console error. 
+                // Context doesn't expose toast. We can alert as fallback or just log.
+                // Assuming global toast/error handler might exist or we just ignore UI feedback here for now to avoid breaking hooks.
+            }
         }
     };
 
