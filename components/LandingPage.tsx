@@ -427,7 +427,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
 
                     {/* Buttons - Mobile Only (Order 3) - Restored below carousel */}
                     <motion.div
-                        className="order-3 lg:hidden w-full text-center mt-2 relative z-20"
+                        className="order-3 lg:hidden w-full text-center mt-8 relative z-20"
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.5 }}
@@ -464,7 +464,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
 
                             </div>
 
-                            <div className="flex items-center justify-center gap-2 text-sm text-gray-500 font-medium">
+                            <div className="flex items-center justify-center gap-2 text-sm text-gray-500 font-medium mt-4">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-[#007AFF]"></span>
