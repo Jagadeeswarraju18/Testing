@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Shield, Star, Zap, ChevronRight, Play, X, Download, Smartphone, Bell, PieChart, Layers, Search, Calendar, Mail, Loader2, TrendingDown, Sparkles, LayoutDashboard, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
+import { Menu, ArrowLeft, ArrowRight, Check, Shield, Star, Zap, ChevronRight, Play, X, Download, Smartphone, Bell, PieChart, Layers, Search, Calendar, Mail, Loader2, TrendingDown, Sparkles, LayoutDashboard, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
 import { Link } from './Link'; // Assuming simple link component or use href
 import { supabase } from '../lib/supabase';
 
@@ -107,9 +107,14 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
     };
 
     const [isMobile, setIsMobile] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
-        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        const checkMobile = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (!mobile) setIsMobileMenuOpen(false);
+        };
         checkMobile();
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
@@ -143,20 +148,63 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
                             <a href="#contact" className="px-5 py-2 rounded-full hover:bg-white hover:text-gray-900 hover:shadow-sm transition-all border border-transparent hover:border-gray-100">Contact</a>
                         </nav>
 
-                        <button
-                            onClick={onGetStarted}
-                            className="px-4 py-2 md:px-6 md:py-2.5 bg-gray-900 text-white text-[12px] md:text-sm font-bold rounded-full hover:bg-gray-800 transition-all shadow-md"
-                        >
-                            Sign In
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={onGetStarted}
+                                className="px-4 py-2 bg-gray-900 text-white text-[12px] font-bold rounded-full hover:bg-gray-800 transition-all shadow-md md:flex hidden"
+                            >
+                                Sign In
+                            </button>
+                            <button
+                                onClick={() => setIsMobileMenuOpen(true)}
+                                className="md:hidden p-2 text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+                            >
+                                <Menu size={24} />
+                            </button>
+                        </div>
                     </div>
 
-                    <nav className="md:hidden mt-2 p-1 rounded-full border border-gray-200 bg-white shadow-lg flex items-center gap-1 overflow-x-auto no-scrollbar text-[12px] font-medium text-gray-600">
-                        <a href="#features" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Features</a>
-                        <a href="#how-it-works" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">How it works</a>
-                        <a href="#comparison" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Why Spendyx</a>
-                        <a href="#contact" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Contact</a>
-                    </nav>
+                    {/* Mobile Menu Dropdown */}
+                    <AnimatePresence>
+                        {isMobileMenuOpen && (
+                            <>
+                                {/* Click-away backdrop */}
+                                <div className="fixed inset-0 z-[55]" onClick={() => setIsMobileMenuOpen(false)} />
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                    className="absolute top-[calc(100%+12px)] left-0 right-0 z-[60] bg-white/98 backdrop-blur-xl p-3 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 md:hidden overflow-hidden"
+                                >
+                                    <nav className="flex flex-col gap-1 text-[15px] font-bold text-gray-900">
+                                        <a href="#features" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3.5 rounded-2xl hover:bg-gray-50 hover:text-primary transition-colors flex items-center justify-between group">
+                                            Features <ChevronRight size={18} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                        </a>
+                                        <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3.5 rounded-2xl hover:bg-gray-50 hover:text-primary transition-colors flex items-center justify-between group">
+                                            How it works <ChevronRight size={18} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                        </a>
+                                        <a href="#comparison" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3.5 rounded-2xl hover:bg-gray-50 hover:text-primary transition-colors flex items-center justify-between group">
+                                            Why Spendyx <ChevronRight size={18} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                        </a>
+                                        <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="px-5 py-3.5 rounded-2xl hover:bg-gray-50 hover:text-primary transition-colors flex items-center justify-between group">
+                                            Contact <ChevronRight size={18} className="text-gray-300 group-hover:text-primary transition-colors" />
+                                        </a>
+                                        <div className="h-px bg-gray-100/50 my-1 mx-2" />
+                                        <button
+                                            onClick={() => {
+                                                setIsMobileMenuOpen(false);
+                                                onGetStarted();
+                                            }}
+                                            className="w-full mt-1 py-4 bg-gray-900 text-white font-bold rounded-2xl text-[15px] shadow-lg active:scale-[0.98] transition-transform"
+                                        >
+                                            Get Started Now
+                                        </button>
+                                    </nav>
+                                </motion.div>
+                            </>
+                        )}
+                    </AnimatePresence>
                 </div>
             </header>
 
