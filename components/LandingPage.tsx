@@ -209,7 +209,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
             </header>
 
             {/* Hero Section */}
-            <section className="relative pt-10 pb-8 lg:pt-12 lg:pb-32 overflow-hidden">
+            <section className="relative pt-6 pb-8 lg:pt-12 lg:pb-32 overflow-hidden">
                 <div className="max-w-[1400px] mx-auto px-6 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-12 items-center">
 
                     {/* App Showcase Animation - 3D Rotating Carousel */}
@@ -309,7 +309,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
                             </div>
                             <div>
                                 <p className="text-[10px] md:text-xs text-gray-500 uppercase font-bold tracking-wider">Total Savings</p>
-                                <p className="text-lg md:text-xl font-black text-gray-900">$1,240</p>
+                                <p className="text-lg md:text-xl font-black text-gray-900">$510</p>
                             </div>
                         </motion.div>
 
