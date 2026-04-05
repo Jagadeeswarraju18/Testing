@@ -128,12 +128,12 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 overflow-x-hidden">
             {/* Header */}
-            <header className="sticky top-0 z-50 px-4 md:px-6 pt-5">
+            <header className="sticky top-0 z-50 px-4 md:px-6 pt-2 md:pt-5 transition-all">
                 <div className="max-w-[1280px] mx-auto">
-                    <div className="h-[76px] flex items-center justify-between gap-4 rounded-full border border-gray-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-5 md:px-6">
-                        <div className="flex items-center gap-3 shrink-0">
-                            <img src="/Spendyx.png" alt="Spendyx Logo" className="w-10 h-10 md:w-11 md:h-11 object-contain" />
-                            <span className="font-black text-2xl md:text-3xl tracking-tight leading-none text-gray-900">Spendyx</span>
+                    <div className="h-14 md:h-[76px] flex items-center justify-between gap-4 rounded-full border border-gray-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-4 md:px-6">
+                        <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                            <img src="/Spendyx.png" alt="Spendyx Logo" className="w-8 h-8 md:w-11 md:h-11 object-contain" />
+                            <span className="font-black text-xl md:text-3xl tracking-tight leading-none text-gray-900">Spendyx</span>
                         </div>
 
                         <nav className="hidden md:flex items-center gap-1 p-1.5 rounded-full bg-gray-50 border border-gray-100 text-[14px] font-semibold text-gray-600">
@@ -145,17 +145,17 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
 
                         <button
                             onClick={onGetStarted}
-                            className="px-6 py-2.5 bg-gray-900 text-white text-sm font-bold rounded-full hover:bg-gray-800 transition-all shadow-md"
+                            className="px-4 py-2 md:px-6 md:py-2.5 bg-gray-900 text-white text-[12px] md:text-sm font-bold rounded-full hover:bg-gray-800 transition-all shadow-md"
                         >
                             Sign In
                         </button>
                     </div>
 
-                    <nav className="md:hidden mt-3 p-1.5 rounded-full border border-gray-200 bg-white shadow-lg flex items-center gap-2 overflow-x-auto no-scrollbar text-sm font-medium text-gray-600">
-                        <a href="#features" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Features</a>
-                        <a href="#how-it-works" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">How it works</a>
-                        <a href="#comparison" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Why Spendyx</a>
-                        <a href="#contact" className="whitespace-nowrap px-4 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Contact</a>
+                    <nav className="md:hidden mt-2 p-1 rounded-full border border-gray-200 bg-white shadow-lg flex items-center gap-1 overflow-x-auto no-scrollbar text-[12px] font-medium text-gray-600">
+                        <a href="#features" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Features</a>
+                        <a href="#how-it-works" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">How it works</a>
+                        <a href="#comparison" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Why Spendyx</a>
+                        <a href="#contact" className="whitespace-nowrap px-3 py-1.5 rounded-full hover:bg-gray-50 hover:text-gray-900 transition-colors">Contact</a>
                     </nav>
                 </div>
             </header>
