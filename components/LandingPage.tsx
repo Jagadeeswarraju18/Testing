@@ -133,7 +133,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
     return (
         <div className="min-h-screen bg-gray-50 font-sans text-gray-900 overflow-x-hidden">
             {/* Header */}
-            <header className="sticky top-0 z-50 px-4 md:px-6 pt-2 md:pt-5 transition-all">
+            <header className="sticky top-0 z-50 px-4 md:px-6 pt-1 md:pt-5 transition-all">
                 <div className="max-w-[1280px] mx-auto">
                     <div className="h-14 md:h-[76px] flex items-center justify-between gap-4 rounded-full border border-gray-200 bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] px-4 md:px-6">
                         <div className="flex items-center gap-2 md:gap-3 shrink-0">
@@ -209,11 +209,11 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
             </header>
 
             {/* Hero Section */}
-            <section className="relative pt-6 pb-8 lg:pt-12 lg:pb-32 overflow-hidden">
-                <div className="max-w-[1400px] mx-auto px-6 flex flex-col lg:grid lg:grid-cols-2 gap-4 lg:gap-12 items-center">
+            <section className="relative pt-2 pb-8 lg:pt-12 lg:pb-32 overflow-hidden">
+                <div className="max-w-[1400px] mx-auto px-6 flex flex-col lg:grid lg:grid-cols-2 gap-2 lg:gap-12 items-center">
 
                     {/* App Showcase Animation - 3D Rotating Carousel */}
-                    <div className="order-2 lg:order-2 relative h-[380px] lg:h-[550px] mt-0 lg:mt-0 w-full flex items-center justify-center lg:justify-center" style={{ perspective: '1200px' }}>
+                    <div className="order-2 lg:order-2 relative h-[320px] lg:h-[550px] mt-0 lg:mt-0 w-full flex items-center justify-center lg:justify-center" style={{ perspective: '1200px' }}>
                         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-100/50 to-purple-100/50 rounded-full blur-3xl opacity-60 transform translate-x-1/4 scale-75"></div>
 
                         {/* 3D Circular Rotating Carousel */}
@@ -324,8 +324,8 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.1 }}
                         >
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-2 md:mb-6">
-                                <Star size={12} className="fill-indigo-700" />
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wider mb-1 md:mb-6">
+                                <Star size={10} className="fill-indigo-700" />
                                 <span>v1.0 is Live</span>
                             </div>
                         </motion.div>
@@ -333,7 +333,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.2 }}
-                            className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-2 md:mb-6 tracking-tight max-w-[120%]"
+                            className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-gray-900 leading-[1.1] mb-1 md:mb-6 tracking-tight max-w-[120%]"
                         >
                             Never pay for subscriptions you forgot to cancel.
                         </motion.h1>
@@ -341,7 +341,7 @@ const LandingPage: React.FC<{ onGetStarted: () => void }> = ({ onGetStarted }) =
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5, delay: 0.3 }}
-                            className="text-base sm:text-lg md:text-xl text-gray-500 mb-4 lg:mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0"
+                            className="text-base sm:text-lg md:text-xl text-gray-500 mb-1 lg:mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0"
                         >
                             Get notified before renewals and stop wasting money.
                         </motion.p>
